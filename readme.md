@@ -37,6 +37,7 @@ php artisan migrate
 
 # Jalankan server API (Gunakan IP 0.0.0.0 agar bisa diakses emulator/HP)
 php artisan serve --host=0.0.0.0 --port=8000
+````
 
 ### 2. Setup Mobile (expo)
 
