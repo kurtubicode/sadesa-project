@@ -1,4 +1,4 @@
-# SADESA (Sistem Administrasi Desa) 🏛️
+# SADESA (Sahabat Digital Desa) 🏛️
 
 Sistem informasi dan administrasi terpadu untuk pelayanan warga Desa Cirangkong. Proyek ini dikembangkan menggunakan arsitektur _monorepo_ untuk memudahkan pengelolaan kode, memisahkan antara sistem _backend_ (Admin Web & API) dan _frontend_ (Aplikasi Mobile Warga).
 
