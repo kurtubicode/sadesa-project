@@ -9,7 +9,13 @@
       "Bash(python3 -c ' *)",
       "Bash(python -c ' *)",
       "Bash(pip install *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(php artisan *)",
+      "Bash(cd \"C:\\\\laragon\\\\www\\\\sadesa-project\\\\backend\" && php artisan route:list --path=api/login 2>&1)",
+      "Bash(cd \"C:\\\\laragon\\\\www\\\\sadesa-project\\\\mobile\" && cat .env 2>&1)",
+      "Bash(ipconfig)",
+      "Bash(findstr \"IPv4\")",
+      "Bash(curl -s -X POST http://192.168.1.16:8000/api/login -H \"Content-Type: application/json\" -H \"Accept: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"ahmad@sadesa.test\\\\\",\\\\\"password\\\\\":\\\\\"password\\\\\"}\")"
     ]
   }
 }
