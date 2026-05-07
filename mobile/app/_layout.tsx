@@ -27,10 +27,9 @@ export default function RootLayout() {
       </Stack> */}
 
       <Stack>
-        {/* Sembunyikan header untuk halaman index (Login) */}
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        {/* Sembunyikan header saat masuk ke folder (tabs) */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index"    options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ title: "Daftar Akun", headerBackTitle: "Login" }} />
+        <Stack.Screen name="(tabs)"   options={{ headerShown: false }} />
       </Stack>
 
       <StatusBar style="auto" />
