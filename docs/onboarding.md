@@ -1,66 +1,56 @@
 # Panduan Onboarding Developer — SADESA
 
-Dokumen ini membantu developer baru untuk setup environment, memahami struktur proyek, dan mulai berkontribusi dalam waktu singkat.
+Panduan ini membantu developer baru setup environment dan mulai berkontribusi dalam waktu singkat.
 
 ---
 
 ## 1. Gambaran Proyek
 
-SADESA (Sahabat Digital Desa) adalah sistem informasi dan administrasi terpadu untuk warga Desa Cirangkong. Proyek ini terdiri dari dua bagian:
+SADESA adalah sistem informasi dan administrasi untuk Desa Cirangkong. Terdiri dari:
 
-- **Backend** — Panel admin berbasis web untuk petugas desa, sekaligus REST API untuk aplikasi mobile
-- **Mobile** — Aplikasi Android/iOS untuk warga mengakses layanan desa
+- **Backend** — Laravel 12: panel web admin + REST API untuk mobile
+- **Mobile** — Expo + React Native: aplikasi warga Android/iOS
+- **Docs** — Dokumentasi teknis
 
 ```
 sadesa-project/
-├── backend/   ← Laravel 11 (web admin + REST API)
-├── mobile/    ← React Native + Expo (aplikasi warga)
-└── docs/      ← Dokumentasi teknis
+├── backend/   Laravel 12 (web + API)
+├── mobile/    Expo Router v4 (mobile warga)
+└── docs/      Dokumentasi
 ```
 
 ---
 
 ## 2. Prasyarat
 
-Install semua tools berikut sebelum memulai:
-
-| Tool | Versi Minimum | Link Download |
-|------|--------------|---------------|
-| PHP | 8.2 | https://www.php.net |
-| Composer | 2.x | https://getcomposer.org |
-| Node.js | 20 LTS | https://nodejs.org |
-| MySQL | 8.x | via Laragon / XAMPP |
+| Tool | Versi | Download |
+|------|-------|----------|
+| PHP | ≥ 8.2 | https://php.net atau via Laragon |
+| Composer | ≥ 2.x | https://getcomposer.org |
+| Node.js | ≥ 20 LTS | https://nodejs.org |
+| MySQL | ≥ 8.0 | via Laragon / XAMPP |
 | Git | terbaru | https://git-scm.com |
-| Expo Go (HP) | terbaru | Play Store / App Store |
+| Expo Go | terbaru | Play Store / App Store |
 
-**Rekomendasi:** Gunakan **Laragon** di Windows karena sudah bundled PHP, MySQL, dan Nginx sekaligus.
+> **Rekomendasi Windows:** Gunakan **Laragon** — sudah include PHP, MySQL, dan Nginx dalam satu installer.
 
 ---
 
-## 3. Setup Lokal
-
-### Clone & Masuk ke Direktori
-
-```bash
-git clone <url-repo> sadesa-project
-cd sadesa-project
-```
-
-### Setup Backend
+## 3. Setup Backend
 
 ```bash
 cd backend
 
-# Install semua dependensi
+# Install dependensi
 composer install
 npm install
 
-# Buat file .env dari template
+# Buat file environment
 cp .env.example .env
 php artisan key:generate
 ```
 
-Edit `.env` — sesuaikan konfigurasi database:
+Edit `backend/.env`:
 
 ```env
 APP_NAME=SADESA
@@ -75,216 +65,264 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Buat database `sadesa` di MySQL, lalu jalankan migrasi:
+Buat database `sadesa` di MySQL, lalu:
 
 ```bash
-# Buat semua tabel
+# Jalankan migrasi
 php artisan migrate
 
-# (Opsional) Isi data awal jika seeder tersedia
+# Isi data awal
 php artisan db:seed
-```
 
-Jalankan server development:
+# Build asset (untuk production / pertama kali)
+npm run build
 
-```bash
-# Gunakan --host=0.0.0.0 agar bisa diakses dari HP/emulator
+# Jalankan server (0.0.0.0 agar bisa diakses dari HP/emulator di LAN)
 php artisan serve --host=0.0.0.0 --port=8000
-
-# Di terminal terpisah: jalankan Vite untuk asset hot-reload
-npm run dev
 ```
 
-Admin panel bisa diakses di `http://localhost:8000`.
+> **Development:** jalankan `npm run dev` di terminal terpisah untuk hot-reload Vite.
 
-### Setup Mobile
-
-```bash
-cd mobile
-npm install
-```
-
-Temukan IP lokal komputermu:
-```bash
-# Windows
-ipconfig
-# Cari "IPv4 Address" di adapter Wi-Fi, contoh: 192.168.1.10
-```
-
-Update URL API di dua file:
-
-**`app/index.tsx`** — cari dan ganti URL di fungsi login:
-```javascript
-// Sebelum:
-const response = await axios.post('http://192.168.8.185:8000/api/login', ...)
-// Sesudah (ganti dengan IP-mu):
-const response = await axios.post('http://192.168.1.10:8000/api/login', ...)
-```
-
-**`app/cekapi.tsx`** — cari dan ganti URL tes koneksi:
-```javascript
-// Sebelum:
-const response = await axios.get('http://192.168.8.185:8000/api/tes-koneksi')
-// Sesudah:
-const response = await axios.get('http://192.168.1.10:8000/api/tes-koneksi')
-```
-
-Jalankan Expo:
-```bash
-npx expo start
-```
-
-Scan QR code dengan Expo Go, atau tekan `a` untuk emulator Android.
+Panel web bisa diakses di: `http://localhost:8000`
 
 ---
 
-## 4. Membuat Akun Admin Pertama
+## 4. Setup Mobile
 
-Buat user via Tinker:
+```bash
+cd mobile
+
+# Install dependensi
+npm install
+
+# Buat file environment
+cp .env.example .env
+```
+
+Edit `mobile/.env`:
+
+```env
+# IP lokal komputermu (cek dengan: ipconfig di Windows, ifconfig di Mac/Linux)
+# HP dan komputer harus terhubung ke Wi-Fi yang sama
+EXPO_PUBLIC_API_URL=http://192.168.1.10:8000
+```
+
+```bash
+# Jalankan Expo
+npx expo start
+
+# Jika ada masalah cache:
+npx expo start -c
+```
+
+Scan QR code dengan **Expo Go** di HP, atau tekan:
+- `a` → Android emulator
+- `i` → iOS Simulator (Mac only)
+- `w` → Web browser
+
+> ⚠️ **Jangan hardcode IP di kode sumber.** Semua screen mobile menggunakan `import api from "@/lib/api"` yang membaca `EXPO_PUBLIC_API_URL` dari `.env`.
+
+---
+
+## 5. Buat Akun Development
+
+Jalankan seeder (jika sudah dikonfigurasi):
+```bash
+php artisan db:seed
+```
+
+Atau buat manual via Tinker:
 
 ```bash
 php artisan tinker
 ```
 
 ```php
+// Admin
 \App\Models\User::create([
-    'name' => 'Admin Desa',
-    'email' => 'admin@sadesa.test',
-    'password' => 'password',
+    'name' => 'Admin Desa', 'email' => 'admin@sadesa.test',
+    'password' => 'password', 'role' => 'admin', 'status' => 'aktif',
+    'nik' => '3210000000000000',
+]);
+
+// Staff
+\App\Models\User::create([
+    'name' => 'Petugas', 'email' => 'staff@sadesa.test',
+    'password' => 'password', 'role' => 'staff', 'status' => 'aktif',
+    'nik' => '3210000000000001',
+]);
+
+// Kepala Desa
+\App\Models\User::create([
+    'name' => 'Kepala Desa', 'email' => 'kepala@sadesa.test',
+    'password' => 'password', 'role' => 'kepala_desa', 'status' => 'aktif',
+    'nik' => '3210000000000002',
+]);
+
+// Warga (untuk testing mobile)
+\App\Models\User::create([
+    'name' => 'Warga Test', 'email' => 'warga@sadesa.test',
+    'password' => 'password', 'role' => 'warga', 'status' => 'aktif',
+    'nik' => '3210000000000003',
 ]);
 ```
 
-Login di `http://localhost:8000/login` dengan email dan password di atas.
+| Akun | URL / App | Email | Password |
+|------|-----------|-------|----------|
+| Admin | `http://localhost:8000/login` | admin@sadesa.test | password |
+| Staff | `http://localhost:8000/login` | staff@sadesa.test | password |
+| Kepala Desa | `http://localhost:8000/login` | kepala@sadesa.test | password |
+| Warga (mobile) | Expo Go | warga@sadesa.test | password |
+
+> ⚠️ Akun admin/staff/kepala tidak bisa digunakan di aplikasi mobile — akan diblokir dengan pesan error.
 
 ---
 
-## 5. Sistem & Cara Kerjanya
+## 6. Cara Kerja Sistem
 
 ### Autentikasi
 
-Ada dua sistem auth yang berjalan bersamaan:
+| Konteks | Mekanisme | Library |
+|---------|-----------|---------|
+| Web admin/staff/kepala/warga | Session + cookie | Laravel Fortify |
+| Mobile warga | Bearer token | Laravel Sanctum |
 
-| Konteks | Library | Mekanisme |
-|---------|---------|-----------|
-| Web (admin panel) | Laravel Fortify | Session + cookie |
-| Mobile (app warga) | Laravel Sanctum | Bearer token |
+### Web — Inertia.js
 
-Alur login mobile: warga login via `POST /api/login` → dapat token → token disimpan di SecureStore → setiap request berikutnya kirim token di header `Authorization`.
+Controller mengembalikan `Inertia::render('NamaHalaman', $data)`. React merender halaman di browser sebagai SPA. Tidak ada endpoint JSON untuk halaman web. Lihat `resources/js/pages/` untuk semua halaman.
 
-### Web Admin (Inertia.js)
+### Mobile — Routing
 
-Backend Laravel merender halaman menggunakan **Inertia.js** — bukan API JSON biasa. Controller mengembalikan `Inertia::render('PageName', $props)` yang kemudian dirender oleh React di browser. Tidak ada endpoint JSON untuk halaman admin.
-
-### Routing Mobile
-
-Mobile menggunakan **Expo Router** (file-based routing). Nama file = nama route:
+Expo Router menggunakan file-based routing. Nama file = URL:
 
 ```
-app/index.tsx          → /          (halaman login)
-app/(tabs)/index.tsx   → /(tabs)    (home)
-app/(tabs)/profile.tsx → /(tabs)/profile
-app/cekapi.tsx         → /cekapi
+app/index.tsx              → /              (Login)
+app/register.tsx           → /register
+app/(tabs)/home.tsx        → /(tabs)/home   (Beranda — tab 1)
+app/(tabs)/layanan.tsx     → /(tabs)/layanan (Layanan — tab 2)
+app/(tabs)/status.tsx      → /(tabs)/status  (Status — tab 3)
+app/(tabs)/profile.tsx     → /(tabs)/profile (Profil — tab 4)
+app/pengajuan/buat.tsx     → /pengajuan/buat
+app/pengajuan/[id].tsx     → /pengajuan/123  (dynamic)
+app/pengaduan/[id].tsx     → /pengaduan/7    (dynamic)
 ```
+
+Stack screen baru harus didaftarkan di `app/_layout.tsx`.
 
 ---
 
-## 6. Task Harian yang Umum
+## 7. Task Harian
 
 ### Menambah Endpoint API Baru
 
-1. Tambahkan route di `backend/routes/api.php`
-2. Buat atau update controller di `app/Http/Controllers/`
-3. Test endpoint dengan Postman / Insomnia
-4. Update [`docs/api.md`](api.md)
+1. Tambah route di `backend/routes/api.php`
+2. Buat/update controller di `app/Http/Controllers/Api/`
+3. Test dengan Postman / Insomnia (sertakan header `Authorization: Bearer <token>`)
+4. Update `docs/api.md`
 
-### Menambah Halaman Mobile Baru
+### Menambah Halaman Web Baru
 
-1. Buat file baru di `mobile/app/` (contoh: `mobile/app/dashboard.tsx`)
-2. Expo Router otomatis mengenali route baru
-3. Tambahkan navigasi ke halaman tersebut dari halaman lain
+1. Buat file di `backend/resources/js/pages/` (contoh: `admin/laporan.tsx`)
+2. Tambah route di `backend/routes/web.php`
+3. Tambah controller method
+4. Tambah item sidebar di `components/app-sidebar.tsx` (jika perlu)
+
+### Menambah Screen Mobile Baru
+
+1. Buat file di `mobile/app/` (contoh: `mobile/app/notifikasi.tsx`)
+2. Daftarkan di `mobile/app/_layout.tsx` dengan `<Stack.Screen name="notifikasi" options={{...}} />`
+3. Navigasi dari screen lain: `router.push('/notifikasi')`
 
 ### Menambah Kolom Database
 
 ```bash
-# Buat migration baru
-php artisan make:migration add_phone_to_users_table --table=users
-
-# Edit file migration, lalu jalankan
+php artisan make:migration add_foto_to_users_table --table=users
+# Edit file migration
 php artisan migrate
 ```
 
 ### Melihat Log Error
 
 ```bash
-# Log Laravel
+# Laravel log
 tail -f backend/storage/logs/laravel.log
 
-# Atau lihat di browser: http://localhost:8000 saat APP_DEBUG=true
+# Atau buka di browser saat APP_DEBUG=true
 ```
 
 ---
 
-## 7. Panduan Git
+## 8. Git Workflow
 
 ### Branch Convention
 
 ```
-main          ← kode production-ready
-develop       ← integrasi fitur
-feature/xxx   ← fitur baru (contoh: feature/surat-pengajuan)
-fix/xxx       ← bugfix (contoh: fix/login-token-expired)
+main          → production-ready
+develop       → integrasi fitur aktif
+feature/xxx   → fitur baru  (contoh: feature/notifikasi-push)
+fix/xxx       → bugfix      (contoh: fix/upload-foto-gagal)
+docs/xxx      → update docs
 ```
 
-### Workflow
+### Workflow Harian
 
 ```bash
-# Mulai fitur baru dari develop
-git checkout develop
-git pull origin develop
+# Mulai dari develop
+git checkout develop && git pull
+
+# Buat branch baru
 git checkout -b feature/nama-fitur
 
-# Setelah selesai
+# Commit
 git add .
-git commit -m "feat: deskripsi singkat perubahan"
+git commit -m "feat: deskripsi singkat"
+
+# Push dan buat PR ke develop
 git push origin feature/nama-fitur
-# Buat Pull Request ke develop
 ```
 
-### Commit Message Format
+### Format Commit
 
 ```
-feat: tambah endpoint pengajuan surat
-fix: perbaiki crash saat token expired
-docs: update API documentation
-refactor: pisahkan logic auth ke service class
+feat:     tambah fitur baru
+fix:      perbaiki bug
+docs:     update dokumentasi
+refactor: restructure kode tanpa ubah behaviour
+style:    formatting (tidak mengubah logika)
+test:     tambah atau perbaiki test
+chore:    update dependency, config
 ```
 
 ---
 
-## 8. Troubleshooting Umum
+## 9. Troubleshooting
 
 | Masalah | Solusi |
 |---------|--------|
 | `php artisan migrate` error | Pastikan database `sadesa` sudah dibuat dan `.env` sudah benar |
-| Mobile tidak bisa connect ke API | Pastikan IP di `app/index.tsx` sudah benar, HP dan komputer di Wi-Fi yang sama |
-| Vite asset tidak muncul | Jalankan `npm run dev` atau `npm run build` di folder backend |
-| Expo QR tidak bisa di-scan | Coba `npx expo start --tunnel` |
-| `composer install` gagal | Cek versi PHP: `php -v` harus >= 8.2 |
-| Token rejected (401) | Logout dan login ulang untuk refresh token |
+| Mobile tidak connect ke API | Cek IP di `mobile/.env`, pastikan HP dan PC di Wi-Fi yang sama |
+| Vite asset tidak muncul | Jalankan `npm run dev` atau `npm run build` di folder `backend/` |
+| Expo QR tidak bisa scan | Coba `npx expo start --tunnel` atau pastikan port 8081 tidak diblokir |
+| `composer install` gagal | Pastikan PHP ≥ 8.2 (`php -v`) |
+| Token rejected `401` | Logout dan login ulang untuk mendapat token baru |
+| `NODE_OPTIONS` error saat build | Jalankan: `NODE_OPTIONS=--max-old-space-size=4096 npm run build` |
+| Login mobile diblokir (403) | Akun `menunggu_verifikasi` — admin harus aktivasi dulu |
+| Login mobile diblokir (Alert) | Role bukan `warga` — gunakan web panel, bukan mobile |
+| Hot-reload Inertia tidak jalan | Pastikan `npm run dev` berjalan dan `VITE_HMR_HOST=localhost` di `.env` |
 
 ---
 
-## 9. Kontak & Referensi
+## 10. Referensi
 
-- **Repository:** Tanya ke lead developer
-- **Dokumentasi API:** [`docs/api.md`](api.md)
-- **Arsitektur Sistem:** [`docs/architecture.md`](architecture.md)
-
-### Referensi Teknologi
-
-- [Laravel 11 Docs](https://laravel.com/docs/11.x)
-- [Laravel Sanctum](https://laravel.com/docs/11.x/sanctum)
-- [Laravel Fortify](https://laravel.com/docs/11.x/fortify)
-- [Inertia.js](https://inertiajs.com)
-- [Expo Router](https://docs.expo.dev/router/introduction/)
-- [Expo SecureStore](https://docs.expo.dev/versions/latest/sdk/securestore/)
+| Dokumen | Link |
+|---------|------|
+| API Reference | [docs/api.md](api.md) |
+| Arsitektur Sistem | [docs/architecture.md](architecture.md) |
+| Mobile Feature Checklist | `LOG_SISTEM/SADESA_MOBILE_CHECKLIST.md` |
+| Laravel 12 | https://laravel.com/docs/12.x |
+| Laravel Sanctum | https://laravel.com/docs/12.x/sanctum |
+| Laravel Fortify | https://laravel.com/docs/12.x/fortify |
+| Inertia.js | https://inertiajs.com |
+| Expo Router | https://docs.expo.dev/router/introduction/ |
+| Expo SecureStore | https://docs.expo.dev/versions/latest/sdk/securestore/ |
+| React Native | https://reactnative.dev/docs/getting-started |

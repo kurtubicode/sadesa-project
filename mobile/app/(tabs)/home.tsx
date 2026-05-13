@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,155 +7,212 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  FlatList,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { getUser, UserData, ROLE_LABEL } from "@/lib/userStorage";
+import { useRouter, useFocusEffect } from "expo-router";
+import { getUser, UserData } from "@/lib/userStorage";
+import api from "@/lib/api";
 
-// ─── Menu per role ────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const MENU_WARGA = [
-  { label: "Ajukan Surat",    icon: "📄", route: "/pengajuan/buat",  warna: "#007BFF" },
-  { label: "Status Layanan",  icon: "🔍", route: "/pengajuan",       warna: "#28A745" },
-  { label: "Pengaduan",       icon: "📢", route: "/pengaduan/buat",  warna: "#FFC107" },
-  { label: "Informasi Desa",  icon: "🏡", route: "/informasi",       warna: "#6F42C1" },
-];
-
-const MENU_STAFF = [
-  { label: "Antrian Masuk",   icon: "📋", route: "/staff/pengajuan", warna: "#007BFF" },
-  { label: "Verifikasi Berkas", icon: "✅", route: "/staff/verifikasi", warna: "#28A745" },
-  { label: "Pengaduan",       icon: "📢", route: "/staff/pengaduan", warna: "#FFC107" },
-];
-
-const MENU_KEPALA_DESA = [
-  { label: "Pengesahan",      icon: "🖊️", route: "/kepala/pengesahan", warna: "#007BFF" },
-  { label: "Statistik",       icon: "📊", route: "/kepala/statistik",  warna: "#28A745" },
-  { label: "Laporan Bulanan", icon: "📑", route: "/kepala/laporan",    warna: "#6F42C1" },
-];
-
-const MENU_ADMIN = [
-  { label: "Kelola Pengguna", icon: "👥", route: "/admin/pengguna",  warna: "#007BFF" },
-  { label: "Kelola Surat",    icon: "📄", route: "/admin/surat",     warna: "#28A745" },
-  { label: "Konten Desa",     icon: "🏡", route: "/admin/konten",    warna: "#FFC107" },
-  { label: "Audit Log",       icon: "🔎", route: "/admin/audit",     warna: "#6F42C1" },
-];
-
-function getMenu(role: UserData["role"]) {
-  switch (role) {
-    case "staff":       return MENU_STAFF;
-    case "kepala_desa": return MENU_KEPALA_DESA;
-    case "admin":       return MENU_ADMIN;
-    default:            return MENU_WARGA;
-  }
+interface MasterSurat {
+  id: number;
+  nama: string;
+  kode: string;
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
+interface InformasiItem {
+  id: number;
+  judul: string;
+  slug: string;
+  tipe: string;
+  created_at: string;
+}
 
-function StatusBadge({ status }: { status: UserData["status"] }) {
-  const config = {
-    aktif:               { bg: "#D4EDDA", text: "#155724", label: "● Aktif" },
-    nonaktif:            { bg: "#F8D7DA", text: "#721C24", label: "● Nonaktif" },
-    menunggu_verifikasi: { bg: "#FFF3CD", text: "#856404", label: "⏳ Menunggu Verifikasi" },
-  }[status];
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function maskNIK(nik: string | null | undefined): string {
+  if (!nik || nik.length < 8) return nik ?? "—";
+  return nik.slice(0, 4) + " •••• •••• " + nik.slice(-4);
+}
+
+function formatTgl(iso: string) {
+  return new Date(iso).toLocaleDateString("id-ID", {
+    day: "numeric", month: "short", year: "numeric",
+  });
+}
+
+// ─── Sub-komponen ─────────────────────────────────────────────────────────────
+
+function LayananCard({ nama, kode, onPress }: { nama: string; kode: string; onPress: () => void }) {
   return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]}>
-      <Text style={[styles.badgeText, { color: config.text }]}>{config.label}</Text>
-    </View>
+    <TouchableOpacity style={styles.layananCard} onPress={onPress} activeOpacity={0.75}>
+      <View style={styles.layananIconBox}>
+        <Text style={styles.layananIcon}>📄</Text>
+      </View>
+      <Text style={styles.layananKode}>{kode}</Text>
+      <Text style={styles.layananNama} numberOfLines={2}>{nama}</Text>
+    </TouchableOpacity>
   );
 }
 
-// ─── Komponen kartu menu ──────────────────────────────────────────────────────
-
-function MenuCard({
-  label, icon, warna, onPress,
-}: { label: string; icon: string; warna: string; onPress: () => void }) {
+function InformasiCard({ item, onPress }: { item: InformasiItem; onPress: () => void }) {
+  const isBerita = item.tipe === "berita";
   return (
-    <TouchableOpacity
-      style={[styles.card, { borderLeftColor: warna }]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
-      <Text style={styles.cardIcon}>{icon}</Text>
-      <Text style={styles.cardLabel}>{label}</Text>
+    <TouchableOpacity style={styles.infoCard} onPress={onPress} activeOpacity={0.8}>
+      <View style={[styles.infoBadge, { backgroundColor: isBerita ? "#EBF4FD" : "#FFF8E6" }]}>
+        <Text style={[styles.infoBadgeText, { color: isBerita ? "#2078D4" : "#B07A00" }]}>
+          {isBerita ? "📰 Berita" : "📢 Pengumuman"}
+        </Text>
+      </View>
+      <Text style={styles.infoJudul} numberOfLines={2}>{item.judul}</Text>
+      <Text style={styles.infoTgl}>{formatTgl(item.created_at)}</Text>
     </TouchableOpacity>
   );
 }
 
 // ─── Screen utama ─────────────────────────────────────────────────────────────
 
-export default function HomeScreen() {
+export default function BerandaScreen() {
   const router = useRouter();
-  const [user, setUser]         = useState<UserData | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
+  const [user, setUser]                   = useState<UserData | null>(null);
+  const [masterSurat, setMasterSurat]     = useState<MasterSurat[]>([]);
+  const [informasi, setInformasi]         = useState<InformasiItem[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [refreshing, setRefreshing]       = useState(false);
 
-  const loadUser = async () => {
+  const loadData = async () => {
     const u = await getUser();
     if (!u) { router.replace("/"); return; }
     setUser(u);
+
+    try {
+      const [suratRes, infoRes] = await Promise.all([
+        api.get("/api/master-surat"),
+        api.get("/api/informasi?per_page=3"),
+      ]);
+      setMasterSurat(suratRes.data.data ?? suratRes.data ?? []);
+      setInformasi(infoRes.data.data ?? []);
+    } catch {
+      // gagal fetch, tampilkan data kosong
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  useEffect(() => { loadUser(); }, []);
+  useFocusEffect(useCallback(() => { setLoading(true); loadData(); }, []));
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadUser();
-    setRefreshing(false);
-  };
+  const onRefresh = () => { setRefreshing(true); loadData(); };
 
-  if (!user) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007BFF" />
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={styles.loadingText}>Memuat beranda…</Text>
       </View>
     );
   }
 
-  const menu = getMenu(user.role);
-
   return (
     <ScrollView
       style={styles.screen}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4A90E2" />}
     >
-      {/* Header sapaan */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Halo, {user.name.split(" ")[0]}! 👋</Text>
-          <Text style={styles.roleText}>{ROLE_LABEL[user.role]}</Text>
+      {/* ── Hero ── */}
+      <View style={styles.hero}>
+        <View style={styles.heroTop}>
+          <View>
+            <Text style={styles.heroGreeting}>Halo, {user?.name?.split(" ")[0]} 👋</Text>
+            <Text style={styles.heroSubtitle}>Selamat datang di SADESA</Text>
+          </View>
+          <View style={styles.logoBox}>
+            <Text style={styles.logoText}>🏛️</Text>
+          </View>
         </View>
-        <StatusBadge status={user.status} />
+
+        {/* NIK card */}
+        <View style={styles.nikCard}>
+          <Text style={styles.nikLabel}>NIK</Text>
+          <Text style={styles.nikValue}>{maskNIK(user?.nik)}</Text>
+          <Text style={styles.nikDesc}>Desa Cirangkong · Kec. Cijambe</Text>
+        </View>
       </View>
 
-      {/* Banner peringatan jika akun belum aktif */}
-      {user.status === "menunggu_verifikasi" && (
-        <View style={styles.warningBanner}>
-          <Text style={styles.warningText}>
-            ⚠️ Akun Anda sedang menunggu verifikasi Admin. Beberapa fitur mungkin belum tersedia.
-          </Text>
+      {/* ── Aksi cepat ── */}
+      <View style={styles.aksiRow}>
+        <TouchableOpacity
+          style={[styles.aksiCard, { backgroundColor: "#4A90E2" }]}
+          onPress={() => router.push("/pengajuan/buat")}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.aksiIcon}>📝</Text>
+          <Text style={styles.aksiLabel}>Ajukan Surat</Text>
+          <Text style={styles.aksiSub}>Buat pengajuan baru</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.aksiCard, { backgroundColor: "#E07B39" }]}
+          onPress={() => router.push("/pengaduan/buat")}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.aksiIcon}>📢</Text>
+          <Text style={styles.aksiLabel}>Buat Pengaduan</Text>
+          <Text style={styles.aksiSub}>Sampaikan laporan</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Layanan tersedia ── */}
+      {masterSurat.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Layanan Surat</Text>
+            <TouchableOpacity onPress={() => router.push("/pengajuan/buat")}>
+              <Text style={styles.sectionMore}>Ajukan →</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={masterSurat}
+            keyExtractor={(item) => String(item.id)}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
+            renderItem={({ item }) => (
+              <LayananCard
+                nama={item.nama}
+                kode={item.kode}
+                onPress={() => router.push("/pengajuan/buat")}
+              />
+            )}
+          />
         </View>
       )}
 
-      {/* Deskripsi singkat sistem */}
-      <View style={styles.infoBox}>
-        <Text style={styles.infoBoxTitle}>🏛️ SADESA</Text>
-        <Text style={styles.infoBoxText}>
-          Sistem Administrasi Digital Desa Cirangkong. Ajukan surat, laporkan pengaduan, dan pantau
-          layanan — semuanya dari genggaman tangan.
-        </Text>
-      </View>
+      {/* ── Informasi desa ── */}
+      <View style={[styles.section, { paddingBottom: 32 }]}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Informasi Desa</Text>
+          <TouchableOpacity onPress={() => router.push("/informasi" as any)}>
+            <Text style={styles.sectionMore}>Lihat semua →</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Menu layanan */}
-      <Text style={styles.sectionTitle}>Layanan</Text>
-      <View style={styles.menuGrid}>
-        {menu.map((item) => (
-          <MenuCard
-            key={item.label}
-            label={item.label}
-            icon={item.icon}
-            warna={item.warna}
-            onPress={() => router.push(item.route as any)}
-          />
-        ))}
+        {informasi.length === 0 ? (
+          <View style={styles.emptyInfo}>
+            <Text style={styles.emptyInfoText}>Belum ada informasi terbaru.</Text>
+          </View>
+        ) : (
+          <View style={styles.infoList}>
+            {informasi.map((item) => (
+              <InformasiCard
+                key={item.id}
+                item={item}
+                onPress={() => router.push(`/informasi/${item.slug}` as any)}
+              />
+            ))}
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -164,78 +221,106 @@ export default function HomeScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F0F2F5" },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  screen:           { flex: 1, backgroundColor: "#F5F5F5" },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F5F5F5" },
+  loadingText:      { marginTop: 12, color: "#888", fontSize: 14 },
 
-  header: {
+  // Hero
+  hero: {
+    backgroundColor: "#4A90E2",
+    paddingTop: 52,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  heroTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#007BFF",
-    paddingHorizontal: 20,
-    paddingTop: 52,
-    paddingBottom: 24,
+    alignItems: "flex-start",
+    marginBottom: 16,
   },
-  greeting: { fontSize: 22, fontWeight: "bold", color: "#fff" },
-  roleText:  { fontSize: 13, color: "#cce4ff", marginTop: 2 },
+  heroGreeting: { fontSize: 22, fontWeight: "bold", color: "#fff" },
+  heroSubtitle: { fontSize: 13, color: "#CCE4FF", marginTop: 2 },
+  logoBox:      { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.2)", justifyContent: "center", alignItems: "center" },
+  logoText:     { fontSize: 22 },
 
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+  nikCard: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
   },
-  badgeText: { fontSize: 12, fontWeight: "600" },
+  nikLabel: { fontSize: 11, color: "#CCE4FF", fontWeight: "600", letterSpacing: 1, marginBottom: 4 },
+  nikValue: { fontSize: 18, color: "#fff", fontWeight: "700", letterSpacing: 2, marginBottom: 2 },
+  nikDesc:  { fontSize: 12, color: "#a8ccf0" },
 
-  warningBanner: {
-    backgroundColor: "#FFF3CD",
-    borderLeftWidth: 4,
-    borderLeftColor: "#FFC107",
-    margin: 16,
-    padding: 12,
-    borderRadius: 8,
+  // Aksi cepat
+  aksiRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 4,
   },
-  warningText: { color: "#856404", fontSize: 13, lineHeight: 19 },
-
-  infoBox: {
-    backgroundColor: "#fff",
-    margin: 16,
-    marginTop: 0,
+  aksiCard: {
+    flex: 1,
+    borderRadius: 14,
     padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  aksiIcon:  { fontSize: 28, marginBottom: 8 },
+  aksiLabel: { fontSize: 14, fontWeight: "700", color: "#fff", marginBottom: 2 },
+  aksiSub:   { fontSize: 11, color: "rgba(255,255,255,0.8)" },
+
+  // Section
+  section:       { marginTop: 20 },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, marginBottom: 12 },
+  sectionTitle:  { fontSize: 16, fontWeight: "700", color: "#222" },
+  sectionMore:   { fontSize: 13, color: "#4A90E2", fontWeight: "600" },
+
+  // Layanan card
+  layananCard: {
+    width: 110,
+    backgroundColor: "#fff",
     borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  infoBoxTitle: { fontWeight: "bold", fontSize: 15, marginBottom: 6, color: "#333" },
-  infoBoxText:  { color: "#555", fontSize: 13, lineHeight: 19 },
-
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginHorizontal: 16,
-    marginBottom: 10,
-  },
-  menuGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 10,
-    paddingBottom: 30,
-  },
-  card: {
-    backgroundColor: "#fff",
-    width: "46%",
-    margin: "2%",
-    padding: 18,
-    borderRadius: 12,
-    borderLeftWidth: 4,
+  layananIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#EBF4FD",
+    justifyContent: "center",
     alignItems: "center",
+    marginBottom: 8,
+  },
+  layananIcon: { fontSize: 20 },
+  layananKode: { fontSize: 10, color: "#4A90E2", fontWeight: "700", marginBottom: 2 },
+  layananNama: { fontSize: 11, color: "#444", textAlign: "center", lineHeight: 14 },
+
+  // Informasi
+  infoList:      { paddingHorizontal: 16, gap: 10 },
+  emptyInfo:     { marginHorizontal: 16, padding: 16, backgroundColor: "#fff", borderRadius: 12, alignItems: "center" },
+  emptyInfoText: { color: "#aaa", fontSize: 13 },
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 14,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  cardIcon:  { fontSize: 28, marginBottom: 8 },
-  cardLabel: { fontSize: 13, fontWeight: "600", color: "#333", textAlign: "center" },
+  infoBadge:     { alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginBottom: 8 },
+  infoBadgeText: { fontSize: 11, fontWeight: "700" },
+  infoJudul:     { fontSize: 14, fontWeight: "600", color: "#222", lineHeight: 20, marginBottom: 4 },
+  infoTgl:       { fontSize: 12, color: "#999" },
 });

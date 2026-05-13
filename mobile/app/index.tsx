@@ -41,6 +41,15 @@ export default function LoginScreen() {
     try {
       const res = await api.post("/api/login", { email, password });
 
+      // Aplikasi ini hanya untuk warga desa
+      if (res.data.user?.role !== "warga") {
+        Alert.alert(
+          "Akses Ditolak",
+          "Aplikasi mobile SADESA hanya untuk warga desa. Silakan gunakan web portal untuk akun admin, petugas, atau kepala desa.",
+        );
+        return;
+      }
+
       await saveSession(res.data.token, res.data.user);
       router.replace("/home");
     } catch (error: any) {

@@ -27,6 +27,7 @@ export default function RootLayout() {
         {/* Pengaduan */}
         <Stack.Screen name="pengaduan/index"  options={{ title: "Pengaduan Saya" }} />
         <Stack.Screen name="pengaduan/buat"   options={{ title: "Buat Pengaduan" }} />
+        <Stack.Screen name="pengaduan/[id]"   options={{ title: "Detail Pengaduan" }} />
 
         {/* Informasi desa */}
         <Stack.Screen name="informasi/index"  options={{ title: "Informasi Desa" }} />

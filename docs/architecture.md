@@ -1,266 +1,344 @@
 # Arsitektur Sistem SADESA
 
-Dokumen ini menjelaskan desain sistem, keputusan teknis, dan alur data pada proyek SADESA.
-
 ---
 
-## Gambaran Sistem
+## Gambaran Umum
 
-SADESA menggunakan arsitektur **monorepo dual-client**: satu backend melayani dua jenis klien — panel admin web dan aplikasi mobile warga.
+SADESA menggunakan arsitektur **monorepo dual-client**: satu backend Laravel melayani dua jenis klien secara berbeda — panel web (Inertia.js) dan aplikasi mobile (REST API).
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         SADESA                              │
-│                                                             │
-│   ┌──────────────┐              ┌──────────────────────┐    │
-│   │  Admin Web   │              │   Aplikasi Mobile    │    │
-│   │  (Browser)   │              │   (Android / iOS)    │    │
-│   │              │              │                      │    │
-│   │  React +     │              │  React Native +      │    │
-│   │  Inertia.js  │              │  Expo Router         │    │
-│   └──────┬───────┘              └──────────┬───────────┘    │
-│          │ HTTP (Session)                  │ HTTP (Token)    │
-│          │                                 │                 │
-│   ┌──────▼─────────────────────────────────▼───────────┐    │
-│   │                    BACKEND                          │    │
-│   │                  Laravel 11                        │    │
-│   │                                                    │    │
-│   │   ┌─────────────┐      ┌───────────────────────┐  │    │
-│   │   │  Web Routes  │      │      API Routes        │  │    │
-│   │   │  (Inertia)  │      │   /api/* (Sanctum)    │  │    │
-│   │   │  Fortify    │      │                       │  │    │
-│   │   └──────┬──────┘      └──────────┬────────────┘  │    │
-│   │          │                        │                │    │
-│   │   ┌──────▼────────────────────────▼────────────┐  │    │
-│   │   │              Controllers                    │  │    │
-│   │   │         Models (Eloquent ORM)               │  │    │
-│   │   └─────────────────────┬──────────────────────┘  │    │
-│   │                         │                          │    │
-│   │                  ┌──────▼──────┐                   │    │
-│   │                  │    MySQL    │                   │    │
-│   │                  │  Database  │                   │    │
-│   │                  └────────────┘                   │    │
-│   └────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                          SADESA                              │
+│                                                              │
+│  ┌─────────────────────┐      ┌──────────────────────────┐  │
+│  │    Web Dashboard    │      │     Aplikasi Mobile      │  │
+│  │  Admin / Staff /    │      │   Warga (Android/iOS)    │  │
+│  │  Kepala Desa /      │      │                          │  │
+│  │  Warga (read-only)  │      │  Expo + React Native     │  │
+│  │  React + Inertia    │      │  Expo Router v4          │  │
+│  └──────────┬──────────┘      └────────────┬─────────────┘  │
+│             │ HTTP (session cookie)         │ HTTP (Bearer)  │
+│             │                              │                 │
+│  ┌──────────▼──────────────────────────────▼─────────────┐  │
+│  │                      BACKEND                          │  │
+│  │                    Laravel 12                        │  │
+│  │                                                      │  │
+│  │  ┌──────────────┐        ┌──────────────────────┐   │  │
+│  │  │  Web Routes  │        │     API Routes       │   │  │
+│  │  │  Inertia.js  │        │  /api/* — Sanctum    │   │  │
+│  │  │  Fortify     │        │  Token-based auth    │   │  │
+│  │  └──────┬───────┘        └──────────┬───────────┘   │  │
+│  │         │                           │                │  │
+│  │  ┌──────▼───────────────────────────▼───────────┐   │  │
+│  │  │     Controllers  →  Models (Eloquent ORM)     │   │  │
+│  │  │     Middleware (CheckRole)                    │   │  │
+│  │  └─────────────────────┬────────────────────────┘   │  │
+│  │                        │                             │  │
+│  │                 ┌──────▼──────┐                      │  │
+│  │                 │    MySQL    │                      │  │
+│  │                 └─────────────┘                      │  │
+│  └───────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Komponen Utama
 
-### Backend (Laravel 11)
+### Backend (Laravel 12)
 
-Backend menjalankan dua peran sekaligus:
+**Panel Web (Admin, Staff, Kepala Desa, Warga)**
+- Menggunakan **Inertia.js** — Laravel merender halaman React tanpa membangun API JSON terpisah
+- Navigasi SPA tanpa full-page reload, React berjalan di browser
+- Autentikasi via **Laravel Fortify** (session + cookie, dengan 2FA opsional)
+- Role dispatch di `DashboardController` → render halaman berbeda per role
+- Middleware `CheckRole` melindungi route `/admin/*`, `/staff/*`, `/kepala-desa/*`
 
-**1. Web Application (Admin Panel)**
-- Menggunakan **Inertia.js** sebagai jembatan antara Laravel dan React
-- Laravel tidak mengembalikan JSON untuk halaman web — ia merender HTML dengan data terhidrasi di dalamnya
-- React berjalan di browser sebagai SPA (Single Page App), navigasi tanpa full page reload
-- Autentikasi via **Laravel Fortify** (session-based, cookie)
-
-**2. REST API (untuk Mobile)**
-- Route terpisah di `routes/api.php` dengan prefix `/api`
-- Autentikasi via **Laravel Sanctum** (token-based)
+**REST API (Mobile Warga)**
+- Route di `routes/api.php`, prefix `/api/`
+- Autentikasi via **Laravel Sanctum** (personal access token di database)
 - Mengembalikan JSON murni
+- Role guard via middleware `role:warga`, `role:staff,admin`, `role:kepala_desa,admin`
 
-### Mobile (React Native + Expo)
+### Mobile (Expo + React Native)
 
-- Dibangun dengan **Expo** untuk kemudahan development dan distribusi
-- Routing menggunakan **Expo Router** (file-based, mirip Next.js)
-- Komunikasi ke backend via **Axios** (HTTP client)
-- Token disimpan dengan **Expo SecureStore** (enkripsi OS-level, aman dari akses app lain)
+- **Expo Router v4** — file-based routing (`app/` directory = route tree)
+- **Axios** dengan request interceptor → attach Bearer token otomatis dari SecureStore
+- **Expo SecureStore** — penyimpanan token terenkripsi di level OS
+- **Warga-only guard** — cek `user.role !== 'warga'` setelah login, blokir non-warga
+- 4 bottom tab: **Beranda**, **Layanan**, **Status**, **Profil**
 
 ---
 
-## Database
+## Roles & Akses
 
-### Skema Tabel
+| Role | Web | Mobile |
+|------|-----|--------|
+| `admin` | Full access semua modul | ❌ Diblokir |
+| `staff` | Verifikasi pengajuan, handle pengaduan | ❌ Diblokir |
+| `kepala_desa` | Pengesahan pengajuan | ❌ Diblokir |
+| `warga` | Dashboard read-only, pengajuan & pengaduan own | ✅ Full mobile app |
+
+---
+
+## Skema Database (Tabel Utama)
 
 ```
 users
-├── id (PK)
-├── name
-├── email (unique)
-├── email_verified_at
-├── password (hashed bcrypt)
-├── two_factor_secret (nullable)
-├── two_factor_recovery_codes (nullable)
-├── two_factor_confirmed_at (nullable)
-├── remember_token
-├── created_at
-└── updated_at
+├── id, nik (unique), name, email (unique), password
+├── role          ENUM(admin, staff, kepala_desa, warga)
+├── status        ENUM(aktif, nonaktif, menunggu_verifikasi)
+├── phone, wilayah_id (FK)
+└── timestamps
 
-personal_access_tokens          ← token Sanctum untuk mobile
-├── id (PK)
-├── tokenable_id (FK → users.id)
-├── tokenable_type
-├── name
-├── token (unique, 64 chars)
-├── abilities
-├── last_used_at
-├── expires_at
-├── created_at
-└── updated_at
+wilayah
+└── id, nama, tipe ENUM(desa,dusun,rw,rt), parent_id (FK self)
 
-password_reset_tokens
-├── email (PK)
-├── token
-└── created_at
+master_surat
+└── id, kode, nama_surat, deskripsi, persyaratan, is_aktif, timestamps
 
-sessions                        ← session web admin
-├── id (PK)
-├── user_id (FK, nullable)
-├── ip_address
-├── user_agent
-├── payload
-└── last_activity
+pengajuan_surat
+├── id, no_pengajuan (unique)
+├── user_id (FK), master_surat_id (FK)
+├── data_formulir (JSON)
+├── status        ENUM(menunggu,diproses,diverifikasi,ditolak_staff,
+│                      menunggu_pengesahan,disetujui,ditolak_kepala,
+│                      selesai,dibatalkan)
+├── catatan
+└── timestamps
+
+dokumen_persyaratan
+└── id, pengajuan_id (FK), nama_file, path_file, jenis_dokumen, timestamps
+
+verifikasi_berkas
+└── id, pengajuan_id (FK), staff_id (FK), status, catatan, timestamps
+
+pengesahan_permohonan
+└── id, pengajuan_id (FK), kepala_desa_id (FK), status, catatan, timestamps
+
+kategori_aduan
+└── id, nama_kategori, deskripsi, timestamps
+
+pengaduan
+├── id, user_id (FK), kategori_aduan_id (FK)
+├── judul, deskripsi
+├── status  ENUM(menunggu, diproses, selesai, ditolak)
+└── timestamps
+
+bukti_pengaduan
+└── id, pengaduan_id (FK), path_file, timestamps
+
+tanggapan_pengaduan
+└── id, pengaduan_id (FK), user_id (FK), isi_tanggapan, timestamps
+
+konten_desa
+├── id, judul, slug (unique), konten, tipe ENUM(berita, pengumuman)
+├── status, admin_id (FK)
+└── timestamps
+
+audit_log
+├── id, user_id (FK), aksi, model, model_id
+├── data (JSON), ip_address
+└── timestamps
+
+personal_access_tokens   ← Sanctum tokens
+sessions                 ← Web sessions
 ```
 
 ---
 
 ## Alur Autentikasi
 
-### Web Admin (Fortify + Session)
+### Web Admin — Fortify + Session
 
 ```
-Browser → POST /login (email, password)
-        → Fortify validasi kredensial
-        → Buat session → Set cookie
+Browser → POST /login {email, password}
+        → Fortify validasi + buat session → set cookie
         → Redirect ke /dashboard
-        → Setiap request berikutnya: cookie dikirim otomatis
+        → Request selanjutnya: cookie otomatis dikirim
 ```
 
-Fitur tambahan yang aktif:
-- Two-factor authentication (TOTP)
-- Email verification
-- Password reset via email
-- Rate limiting: 5 percobaan/menit per IP+email
+Fitur aktif: 2FA (TOTP), verifikasi email, reset password, rate limit 5x/menit.
 
-### Mobile (Sanctum + Token)
+### Mobile — Sanctum + Bearer Token
 
 ```
 App dibuka
   → Cek SecureStore["sadesa_user_token"]
-  → Token ada? → Langsung ke halaman utama
-  → Token tidak ada? → Tampilkan halaman login
+  → Ada?  → Langsung ke /(tabs)/home
+  → Tidak? → Tampilkan halaman login
 
 Login:
   → POST /api/login {email, password}
-  → Server buat personal_access_token
-  → Kembalikan token dalam response
-  → Simpan di SecureStore["sadesa_user_token"]
-  → Navigasi ke /(tabs)
+  → Cek role = "warga" (jika bukan → Alert + batalkan)
+  → Simpan token ke SecureStore
+  → router.replace("/(tabs)/home")
 
-Request terautentikasi:
-  → Header: Authorization: Bearer <token>
-  → Sanctum validasi token dari DB
-  → Lanjutkan request
+Setiap request:
+  → Interceptor Axios baca token dari SecureStore
+  → Sisipkan header: Authorization: Bearer <token>
 
 Logout:
+  → POST /api/logout (revoke token di server)
   → Hapus token dari SecureStore
-  → (TODO: Revoke token di server via POST /api/logout)
-  → Navigasi ke halaman login
+  → router.replace("/")
+```
+
+---
+
+## Alur Pengajuan Surat
+
+```
+Warga (mobile)          Staff (web)           Kepala Desa (web)
+──────────────          ────────────          ─────────────────
+POST /api/pengajuan
+  → status: menunggu
+                        GET /staff/pengajuan
+                        PATCH /staff/pengajuan/{id}/verifikasi
+                          action: setujui
+                          → status: menunggu_pengesahan
+
+                          action: tolak
+                          → status: ditolak_staff
+                                                GET /kepala-desa/pengajuan
+                                                PATCH /kepala-desa/pengajuan/{id}/pengesahan
+                                                  action: setujui → status: disetujui
+                                                  action: tolak   → status: ditolak_kepala
+```
+
+---
+
+## Struktur File Penting
+
+### Backend
+
+```
+backend/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Admin/         AdminDashboard, Pengguna, MasterSurat,
+│   │   │   │                  Pengaduan, KontenDesa, AuditLog, Wilayah
+│   │   │   ├── Staff/         StaffPengajuanController
+│   │   │   ├── KepalaDesa/    KepalaPengajuanController
+│   │   │   ├── Api/           PengajuanSuratController, PengaduanController,
+│   │   │   │                  VerifikasiController, PengesahanController
+│   │   │   ├── DashboardController
+│   │   │   └── InformasiController
+│   │   └── Middleware/        CheckRole, HandleAppearance, HandleInertiaRequests
+│   └── Models/                User, PengajuanSurat, Pengaduan, MasterSurat,
+│                              KontenDesa, AuditLog, BuktiPengaduan,
+│                              TanggapanPengaduan, VerifikasiBerkas,
+│                              PengesahanPermohonan, DokumenPersyaratan
+├── resources/js/
+│   ├── pages/
+│   │   ├── admin/             dashboard, pengguna, master-surat, pengaduan,
+│   │   │                      konten-desa, audit-log, wilayah
+│   │   ├── staff/             pengajuan-list, pengajuan-detail
+│   │   ├── kepala-desa/       pengajuan-list, pengajuan-detail
+│   │   ├── dashboard/         warga.tsx
+│   │   ├── informasi/         index.tsx, show.tsx
+│   │   └── auth/              login.tsx, register.tsx
+│   └── layouts/               app-layout.tsx, app-sidebar.tsx
+└── routes/
+    ├── web.php                Web routes (Inertia)
+    └── api.php                REST API routes (Sanctum)
+```
+
+### Mobile
+
+```
+mobile/
+├── app/
+│   ├── _layout.tsx            Root Stack navigator
+│   ├── index.tsx              Login (warga-only guard)
+│   ├── register.tsx           Register
+│   ├── (tabs)/
+│   │   ├── _layout.tsx        4-tab navigator
+│   │   ├── home.tsx           Beranda
+│   │   ├── layanan.tsx        Hub layanan
+│   │   ├── status.tsx         Riwayat & tracking
+│   │   └── profile.tsx        Profil & logout
+│   ├── pengajuan/
+│   │   ├── buat.tsx           Form ajukan surat
+│   │   ├── index.tsx          List pengajuan
+│   │   └── [id].tsx           Detail + upload dokumen + batalkan
+│   ├── pengaduan/
+│   │   ├── buat.tsx           Form laporan + max 3 foto
+│   │   ├── index.tsx          List pengaduan
+│   │   └── [id].tsx           Detail + foto gallery + tanggapan
+│   └── informasi/
+│       ├── index.tsx          List berita/pengumuman
+│       └── [slug].tsx         Detail artikel
+└── lib/
+    ├── api.ts                 Axios instance + interceptor
+    └── userStorage.ts         SecureStore helpers
 ```
 
 ---
 
 ## Keputusan Teknis
 
-### Mengapa Inertia.js (bukan SPA terpisah)?
+### Inertia.js vs REST API untuk Web Admin
 
-**Konteks:** Panel admin perlu halaman yang kompleks (form, tabel, navigasi) dengan data dari database.
-
-**Keputusan:** Gunakan Inertia.js alih-alih membangun API JSON terpisah untuk web admin.
-
-**Alasan:**
-- Tidak perlu membangun dan maintain dua layer (API + frontend) untuk panel admin
-- Server-side validation Laravel tetap bisa digunakan langsung
-- Routing, auth middleware, dan session Laravel berfungsi seperti biasa
-- React tetap bisa digunakan untuk UI interaktif
-
-**Trade-off:** Admin panel tidak bisa diakses sebagai pure SPA dari domain berbeda.
+**Keputusan:** Inertia.js.  
+**Alasan:** Tidak perlu membangun dua layer (API + frontend) untuk panel admin. Server-side validation Laravel tetap berlaku, routing dan session berfungsi seperti biasa, React tetap bisa dipakai untuk UI interaktif.  
+**Trade-off:** Admin panel tidak bisa dikonsumsi sebagai pure API dari domain lain.
 
 ---
 
-### Mengapa Sanctum (bukan JWT) untuk Mobile?
+### Sanctum vs JWT untuk Mobile
 
-**Konteks:** Aplikasi mobile perlu autentikasi yang aman dan mudah di-manage.
-
-**Keputusan:** Gunakan Laravel Sanctum dengan database tokens.
-
-**Alasan:**
-- Token tersimpan di database — bisa di-revoke kapan saja (logout dari server)
-- Tidak perlu refresh token — token tidak expired secara default
-- Built-in di Laravel, tidak perlu library tambahan
-- Cocok untuk aplikasi dengan user base kecil-menengah
-
-**Trade-off:** Setiap request melakukan query DB untuk validasi token (vs JWT yang stateless). Dapat dimitigasi dengan caching di masa depan.
+**Keputusan:** Sanctum (database tokens).  
+**Alasan:** Token bisa di-revoke dari server kapan saja (logout benar-benar logout). Tidak ada refresh token yang perlu dikelola. Built-in di Laravel.  
+**Trade-off:** Setiap request auth melakukan query database. Dapat dimitigasi dengan caching jika skala besar.
 
 ---
 
-### Mengapa Monorepo?
+### Warga-only Guard di Mobile (bukan di API)
 
-**Keputusan:** Backend dan mobile disimpan dalam satu repositori.
-
-**Alasan:**
-- Perubahan API dan mobile bisa di-commit bersamaan
-- Lebih mudah untuk developer yang mengerjakan keduanya
-- Satu PR bisa mencakup perubahan end-to-end
-
-**Trade-off:** Repo menjadi lebih besar; tim besar mungkin lebih nyaman dengan multi-repo.
+**Keputusan:** Guard dilakukan di sisi mobile setelah login berhasil, bukan di API endpoint login.  
+**Alasan:** API `POST /api/login` tetap generik untuk semua role — berguna untuk testing dan masa depan (staff mobile, dsb). Pembatasan akses mobile adalah keputusan UX, bukan security.  
+**Trade-off:** Admin yang tahu caranya masih bisa akses API dengan token Sanctum via Postman — tapi tidak akan ada UI untuk itu.
 
 ---
 
-## Middleware & Request Lifecycle
+## Variabel Environment Penting
 
-### Web Request
+### Backend (`.env`)
 
-```
-HTTP Request
-  → EncryptCookies (kecuali appearance, sidebar_state)
-  → HandleAppearance (baca cookie tema, set ke view)
-  → HandleInertiaRequests (inject auth.user, app.name ke semua halaman)
-  → Auth middleware (redirect ke login jika belum auth)
-  → Controller
-  → Inertia::render() → JSON response (Inertia) / HTML (first load)
-```
+| Variabel | Dev | Production | Catatan |
+|----------|-----|-----------|---------|
+| `APP_ENV` | `local` | `production` | |
+| `APP_DEBUG` | `true` | **`false`** | Wajib false di prod |
+| `APP_URL` | `http://localhost:8000` | URL publik | |
+| `DB_CONNECTION` | `mysql` | `mysql` | |
+| `SESSION_DRIVER` | `database` | `database` | |
+| `BCRYPT_ROUNDS` | `12` | `14` | Naikkan di prod |
 
-### API Request
+### Mobile (`.env`)
 
-```
-HTTP Request ke /api/*
-  → Sanctum middleware (validasi Bearer token)
-  → Controller
-  → Response JSON
-```
+| Variabel | Keterangan |
+|----------|-----------|
+| `EXPO_PUBLIC_API_URL` | Base URL backend, misal `http://192.168.1.10:8000` |
 
 ---
 
-## Konfigurasi Environment Penting
+## Roadmap
 
-| Variable | Deskripsi | Nilai Dev | Catatan |
-|----------|-----------|-----------|---------|
-| `APP_ENV` | Mode aplikasi | `local` | Set `production` saat deploy |
-| `APP_DEBUG` | Tampilkan error detail | `true` | **Wajib `false` di production** |
-| `DB_CONNECTION` | Driver database | `sqlite` / `mysql` | Gunakan mysql untuk production |
-| `SESSION_DRIVER` | Penyimpanan session | `database` | — |
-| `BCRYPT_ROUNDS` | Kekuatan hash password | `12` | Naikkan ke 14+ di production |
+### ✅ Selesai
+- Auth dual: Fortify (web) + Sanctum (mobile)
+- Role-based routing dan sidebar: admin / staff / kepala_desa / warga
+- Pengajuan surat: end-to-end (warga → staff → kepala desa)
+- Pengaduan: buat, list, detail, tanggapan petugas
+- Konten desa: berita & pengumuman (web CRUD + mobile read)
+- Audit log aksi admin/staff
+- Aplikasi mobile warga: 4 tab, 10+ screen, warga-only guard
 
-**Catatan keamanan:** Di production, `APP_DEBUG=false` wajib — jika `true`, stack trace dan konfigurasi server bisa terekspos ke publik.
-
----
-
-## Area Pengembangan Selanjutnya
-
-### Sudah Diselesaikan
-
-- ✅ **Environment variable untuk API URL** — Base URL dibaca dari `EXPO_PUBLIC_API_URL` di `.env`. Salin `.env.example` ke `.env` dan isi dengan IP lokal.
-- ✅ **Logout me-revoke token di server** — `POST /api/logout` (auth:sanctum) menghapus token dari DB. Mobile memanggil endpoint ini sebelum menghapus token lokal; jika server tidak bisa dihubungi, logout lokal tetap berjalan.
-- ✅ **Centralized Axios instance** — `mobile/lib/api.ts` menjadi satu-satunya tempat konfigurasi base URL dan interceptor Authorization. Semua screen menggunakan `import api from "@/lib/api"`.
-
-### Fitur Mendatang
-
-- Dashboard informasi warga (pengumuman, kegiatan desa)
-- Layanan pengajuan surat (RT, domisili, keterangan usaha, dll.)
-- Notifikasi push (status pengajuan surat)
-- Role-based access (Admin, Petugas, Warga)
+### 🔜 Mendatang
+- Push notifications (Firebase Cloud Messaging)
+- Scan QR Buku Tamu (mobile)
+- Download surat hasil (PDF dari storage)
+- Edit profil warga (mobile)
+- Form dinamis per jenis surat (field schema di `master_surat`)
+- Token refresh / auto-logout saat expired

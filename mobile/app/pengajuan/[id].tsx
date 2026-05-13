@@ -105,19 +105,24 @@ export default function DetailPengajuanScreen() {
       });
       if (result.canceled) return;
 
-      const file = result.assets[0];
+      const file       = result.assets[0];
+      const ext        = file.name?.split(".").pop()?.toLowerCase() ?? "pdf";
+      const jenisDef   = ext === "pdf" ? "Surat / Dokumen PDF" : "Foto / Gambar";
+
       const formData = new FormData();
-      formData.append("dokumen", {
-        uri: file.uri,
+      // Backend mengharapkan key 'file' dan 'jenis_dokumen'
+      formData.append("file", {
+        uri:  file.uri,
         name: file.name,
         type: file.mimeType ?? "application/octet-stream",
       } as any);
+      formData.append("jenis_dokumen", jenisDef);
 
       setUploading(true);
       await api.post(`/api/pengajuan/${id}/dokumen`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      Alert.alert("Berhasil", "Dokumen berhasil diunggah.");
+      Alert.alert("Berhasil ✅", `Dokumen "${file.name}" berhasil diunggah.`);
       fetchData();
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? "Gagal mengunggah dokumen.";
@@ -141,8 +146,8 @@ export default function DetailPengajuanScreen() {
             setCancelling(true);
             try {
               await api.delete(`/api/pengajuan/${id}`);
-              Alert.alert("Berhasil", "Pengajuan telah dibatalkan.", [
-                { text: "OK", onPress: () => router.back() },
+              Alert.alert("Pengajuan Dibatalkan", "Pengajuan Anda telah dibatalkan.", [
+                { text: "OK", onPress: () => router.replace("/(tabs)/status") },
               ]);
             } catch (err: any) {
               const msg = err?.response?.data?.message ?? "Gagal membatalkan.";
