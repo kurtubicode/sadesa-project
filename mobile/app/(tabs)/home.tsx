@@ -328,17 +328,11 @@ export default function BerandaScreen() {
         />
         <QuickAction
           icon={
-            <MaterialCommunityIcons
-              name="qrcode-scan"
-              size={24}
-              color="#28A745"
-            />
+            <Ionicons name="book-outline" size={24} color="#0F766E" />
           }
-          label="SCAN TAMU"
-          color="#28A745"
-          onPress={() =>
-            Alert.alert("Segera Hadir", "Fitur Scan Tamu akan segera tersedia.")
-          }
+          label="BUKU TAMU"
+          color="#0F766E"
+          onPress={() => router.push("/buku-tamu" as any)}
         />
       </View>
 

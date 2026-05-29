@@ -56,7 +56,12 @@ function InputField({
 }) {
   return (
     <View style={styles.inputWrapper}>
-      <Ionicons name={icon} size={18} color={COLORS.textMuted} style={styles.inputIcon} />
+      <Ionicons
+        name={icon}
+        size={18}
+        color={COLORS.textMuted}
+        style={styles.inputIcon}
+      />
       <TextInput
         style={styles.input}
         placeholder={placeholder}
@@ -83,11 +88,11 @@ function InputField({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function LoginScreen() {
-  const [email, setEmail]           = useState("");
-  const [password, setPassword]     = useState("");
-  const [showPass, setShowPass]     = useState(false);
-  const [loading, setLoading]       = useState(false);
-  const [checking, setChecking]     = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   const router = useRouter();
 
@@ -114,12 +119,15 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      const res = await api.post("/api/login", { email: email.trim(), password });
+      const res = await api.post("/api/login", {
+        email: email.trim(),
+        password,
+      });
 
       if (res.data.user?.role !== "warga") {
         Alert.alert(
           "Akses Ditolak",
-          "Aplikasi SADESA hanya untuk warga desa. Gunakan web portal untuk akun petugas."
+          "Aplikasi SADESA hanya untuk warga desa. Gunakan web portal untuk akun petugas.",
         );
         return;
       }
@@ -133,8 +141,14 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       const status = error?.response?.status;
-      if (status === 401) Alert.alert("Login Gagal", "Email atau kata sandi salah.");
-      else if (status === 403) Alert.alert("Akun Dinonaktifkan", error?.response?.data?.message ?? "Akun Anda dinonaktifkan. Hubungi Admin desa.");
+      if (status === 401)
+        Alert.alert("Login Gagal", "Email atau kata sandi salah.");
+      else if (status === 403)
+        Alert.alert(
+          "Akun Dinonaktifkan",
+          error?.response?.data?.message ??
+            "Akun Anda dinonaktifkan. Hubungi Admin desa.",
+        );
       else Alert.alert("Koneksi Gagal", "Tidak dapat terhubung ke server.");
     } finally {
       setLoading(false);
@@ -145,7 +159,11 @@ export default function LoginScreen() {
     return (
       <View style={styles.splashContainer}>
         <SadesaAppIcon />
-        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 24 }} />
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+          style={{ marginTop: 24 }}
+        />
         <Text style={styles.splashText}>Memuat SADESA…</Text>
       </View>
     );
@@ -153,10 +171,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior="padding"
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
@@ -173,7 +188,9 @@ export default function LoginScreen() {
           <View style={styles.logoSection}>
             <SadesaAppIcon />
             <Text style={styles.welcomeTitle}>Selamat Datang</Text>
-            <Text style={styles.welcomeSub}>Silakan masuk untuk melanjutkan</Text>
+            <Text style={styles.welcomeSub}>
+              Silakan masuk untuk melanjutkan
+            </Text>
           </View>
 
           {/* ── Form ── */}
@@ -187,7 +204,9 @@ export default function LoginScreen() {
               keyboardType="email-address"
             />
 
-            <Text style={[styles.fieldLabel, { marginTop: SPACING.md }]}>KATA SANDI</Text>
+            <Text style={[styles.fieldLabel, { marginTop: SPACING.md }]}>
+              KATA SANDI
+            </Text>
             <InputField
               icon="lock-closed-outline"
               placeholder="Masukkan Kata Sandi"
@@ -225,11 +244,11 @@ export default function LoginScreen() {
           </View>
 
           {/* ── Footer ── */}
-          <View style={styles.footer}>
-            <View style={styles.footerLine} />
-            <Text style={styles.footerText}>LAYANAN DIGITAL TERPADU</Text>
-            <View style={styles.footerLine} />
-          </View>
+          {/* <View style={styles.footer}> */}
+          {/* <View style={styles.footerLine} /> */}
+          {/* <Text style={styles.footerText}>LAYANAN DIGITAL TERPADU</Text> */}
+          {/* <View style={styles.footerLine} /> */}
+          {/* </View> */}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -240,66 +259,117 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { flexGrow: 1, paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.xxxl },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: SPACING.xxl,
+    paddingBottom: SPACING.xxxl,
+  },
 
   // Splash
   splashContainer: {
-    flex: 1, backgroundColor: COLORS.background,
-    justifyContent: "center", alignItems: "center",
+    flex: 1,
+    backgroundColor: COLORS.background,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  splashText: { marginTop: SPACING.sm, color: COLORS.textMuted, fontSize: FONT.base },
+  splashText: {
+    marginTop: SPACING.sm,
+    color: COLORS.textMuted,
+    fontSize: FONT.base,
+  },
 
   // Header
   header: {
-    flexDirection: "row", alignItems: "center", gap: SPACING.sm,
-    paddingTop: SPACING.xl, marginBottom: SPACING.xxxl,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.sm,
+    paddingTop: SPACING.xl,
+    marginBottom: SPACING.xxxl,
   },
   headerTitle: { fontSize: FONT.xl, fontWeight: "700", color: COLORS.text },
 
   // Logo section
   logoSection: { alignItems: "center", marginBottom: SPACING.xxxl },
   appIcon: {
-    width: 88, height: 88, borderRadius: RADIUS.xl,
+    width: 88,
+    height: 88,
+    borderRadius: RADIUS.xl,
     backgroundColor: "#0B5F60",
-    justifyContent: "center", alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: SPACING.xl,
     ...SHADOW.md,
   },
-  appIconS:    { color: COLORS.white, fontSize: 30, fontWeight: "800", lineHeight: 34 },
-  appIconDesa: { color: "rgba(255,255,255,0.75)", fontSize: 11, fontWeight: "700", letterSpacing: 3 },
-  welcomeTitle: { fontSize: FONT.xxxl, fontWeight: "800", color: COLORS.text, marginBottom: SPACING.xs },
-  welcomeSub:   { fontSize: FONT.md, color: COLORS.textMuted },
+  appIconS: {
+    color: COLORS.white,
+    fontSize: 30,
+    fontWeight: "800",
+    lineHeight: 34,
+  },
+  appIconDesa: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 3,
+  },
+  welcomeTitle: {
+    fontSize: FONT.xxxl,
+    fontWeight: "800",
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
+  },
+  welcomeSub: { fontSize: FONT.md, color: COLORS.textMuted },
 
   // Form
   form: { gap: 0 },
   fieldLabel: {
-    fontSize: FONT.xs, fontWeight: "700", color: COLORS.textSecondary,
-    letterSpacing: 0.8, marginBottom: SPACING.sm,
+    fontSize: FONT.xs,
+    fontWeight: "700",
+    color: COLORS.textSecondary,
+    letterSpacing: 0.8,
+    marginBottom: SPACING.sm,
   },
 
   inputWrapper: {
-    flexDirection: "row", alignItems: "center",
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: COLORS.inputBg,
-    borderRadius: RADIUS.lg, paddingHorizontal: SPACING.lg,
-    height: 52, marginBottom: SPACING.xs,
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACING.lg,
+    height: 52,
+    marginBottom: SPACING.xs,
   },
-  inputIcon:  { marginRight: SPACING.sm },
-  input:      { flex: 1, fontSize: FONT.lg, color: COLORS.text },
-  eyeBtn:     { padding: SPACING.xs },
+  inputIcon: { marginRight: SPACING.sm },
+  input: { flex: 1, fontSize: FONT.lg, color: COLORS.text },
+  eyeBtn: { padding: SPACING.xs },
 
-  forgotBtn: { alignSelf: "flex-end", marginTop: SPACING.sm, marginBottom: SPACING.xl },
+  forgotBtn: {
+    alignSelf: "flex-end",
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xl,
+  },
   forgotText: { fontSize: FONT.md, color: COLORS.primary, fontWeight: "600" },
 
   submitBtn: {
-    backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
-    height: 54, justifyContent: "center", alignItems: "center",
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.full,
+    height: 54,
+    justifyContent: "center",
+    alignItems: "center",
     ...SHADOW.md,
   },
   submitBtnDisabled: { opacity: 0.7 },
-  submitBtnText: { color: COLORS.white, fontSize: FONT.xl, fontWeight: "700", letterSpacing: 0.3 },
+  submitBtnText: {
+    color: COLORS.white,
+    fontSize: FONT.xl,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
 
   registerRow: {
-    flexDirection: "row", justifyContent: "center", alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: SPACING.xl,
   },
   registerText: { fontSize: FONT.md, color: COLORS.textMuted },
@@ -307,9 +377,17 @@ const styles = StyleSheet.create({
 
   // Footer
   footer: {
-    flexDirection: "row", alignItems: "center", gap: SPACING.md,
-    marginTop: "auto", paddingTop: SPACING.xxxl,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.md,
+    marginTop: "auto",
+    paddingTop: SPACING.xxxl,
   },
   footerLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
-  footerText: { fontSize: FONT.xs, color: COLORS.textMuted, fontWeight: "600", letterSpacing: 1.5 },
+  footerText: {
+    fontSize: FONT.xs,
+    color: COLORS.textMuted,
+    fontWeight: "600",
+    letterSpacing: 1.5,
+  },
 });

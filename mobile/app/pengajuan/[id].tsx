@@ -15,24 +15,25 @@ import { COLORS, FONT, RADIUS, SHADOW, SPACING } from "@/constants/theme";
 const STATUS_MAP: Record<string, { bg: string; text: string; label: string }> = {
   menunggu:            { bg: "#FEF3C7", text: "#92400E", label: "Menunggu" },
   diproses:            { bg: "#DBEAFE", text: "#1E40AF", label: "Sedang Diproses" },
-  diverifikasi:        { bg: "#EDE9FE", text: "#5B21B6", label: "Verifikasi" },
+  diverifikasi:        { bg: "#EDE9FE", text: "#5B21B6", label: "Diverifikasi" },
   ditolak_staff:       { bg: "#FEE2E2", text: "#991B1B", label: "Ditolak Petugas" },
   menunggu_pengesahan: { bg: "#F3E8FF", text: "#6B21A8", label: "Menunggu Pengesahan" },
-  disetujui:           { bg: "#D1FAE5", text: "#065F46", label: "Disetujui" },
+  disetujui:           { bg: "#FEF3C7", text: "#92400E", label: "Disetujui — Diproses" },
   ditolak_kepala:      { bg: "#FEE2E2", text: "#991B1B", label: "Ditolak" },
+  siap_diambil:        { bg: "#CCFBF1", text: "#0F766E", label: "Siap Diambil!" },
   selesai:             { bg: "#D1FAE5", text: "#065F46", label: "Selesai" },
   dibatalkan:          { bg: "#F3F4F6", text: "#6B7280", label: "Dibatalkan" },
 };
 
 // ─── Timeline config ──────────────────────────────────────────────────────────
-// Order: menunggu → diverifikasi → diproses → menunggu_pengesahan → selesai
+// Order: menunggu → diverifikasi → menunggu_pengesahan → siap_diambil → selesai
 
 const TL_STEPS = [
-  { key: "menunggu",            label: "Pengajuan Terkirim",              sublabel: "Pengajuan berhasil diterima" },
-  { key: "diverifikasi",        label: "Menunggu Verifikasi",             sublabel: "Berkas sedang diperiksa petugas" },
-  { key: "diproses",            label: "Sedang Diproses",                 sublabel: "Dokumen sedang diproses" },
-  { key: "menunggu_pengesahan", label: "Selesai & Menunggu Tanda Tangan", sublabel: "Menunggu pengesahan kepala desa" },
-  { key: "selesai",             label: "Dokumen Selesai",                 sublabel: "Surat dapat diunduh" },
+  { key: "menunggu",            label: "Pengajuan Terkirim",        sublabel: "Pengajuan berhasil diterima" },
+  { key: "diverifikasi",        label: "Berkas Diverifikasi",       sublabel: "Berkas telah diperiksa petugas" },
+  { key: "menunggu_pengesahan", label: "Menunggu Pengesahan",       sublabel: "Menunggu persetujuan kepala desa" },
+  { key: "siap_diambil",        label: "Surat Siap Diambil",        sublabel: "Surat sudah jadi, silakan ambil ke kantor desa" },
+  { key: "selesai",             label: "Selesai",                   sublabel: "Surat telah diterima" },
 ];
 const TL_ORDER = TL_STEPS.map(s => s.key);
 const REJECTED = ["ditolak_staff", "ditolak_kepala", "dibatalkan"];
@@ -54,7 +55,10 @@ function getTLState(stepKey: string, currentStatus: string): TLState {
     if (stepIdx === stoppedIdx) return "rejected";
     return "pending";
   }
-  const norm       = currentStatus === "disetujui" ? "selesai" : currentStatus;
+  // disetujui / diproses belum punya step sendiri → anggap sudah lewat menunggu_pengesahan
+  const norm       = (currentStatus === "disetujui" || currentStatus === "diproses")
+                       ? "menunggu_pengesahan"
+                       : currentStatus;
   const currentIdx = TL_ORDER.indexOf(norm);
   const stepIdx    = TL_ORDER.indexOf(stepKey);
   if (stepIdx < currentIdx)  return "done";
@@ -253,8 +257,9 @@ export default function DetailPengajuanScreen() {
   const [data, setData]             = useState<DetailPengajuan | null>(null);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [uploading, setUploading]   = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const [uploading, setUploading]         = useState(false);
+  const [cancelling, setCancelling]       = useState(false);
+  const [confirming, setConfirming]       = useState(false);
 
   const fetchData = async () => {
     try {
@@ -324,14 +329,33 @@ export default function DetailPengajuanScreen() {
     );
   };
 
-  // ── Unduh Surat ────────────────────────────────────────────────────────────
-  const handleUnduh = async () => {
-    if (!data?.url_surat) return;
-    try {
-      await Linking.openURL(data.url_surat);
-    } catch {
-      Alert.alert("Gagal", "Tidak dapat membuka dokumen.");
-    }
+  // ── Konfirmasi Sudah Diambil ───────────────────────────────────────────────
+  const handleKonfirmasiAmbil = () => {
+    Alert.alert(
+      "Konfirmasi Pengambilan",
+      "Konfirmasi bahwa Anda sudah menerima surat dari kantor desa?",
+      [
+        { text: "Belum", style: "cancel" },
+        {
+          text: "Ya, Sudah Diambil",
+          onPress: async () => {
+            setConfirming(true);
+            try {
+              await api.post(`/api/pengajuan/${id}/konfirmasi-ambil`);
+              Alert.alert(
+                "Terima Kasih!",
+                "Pengajuan surat Anda ditandai selesai.",
+                [{ text: "OK", onPress: () => fetchData() }],
+              );
+            } catch (err: any) {
+              Alert.alert("Gagal", err?.response?.data?.message ?? "Gagal mengkonfirmasi.");
+            } finally {
+              setConfirming(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -353,10 +377,10 @@ export default function DetailPengajuanScreen() {
     );
   }
 
-  const cfg        = STATUS_MAP[data.status] ?? { bg: "#F3F4F6", text: "#6B7280", label: data.status };
-  const canUpload  = ["menunggu", "diverifikasi", "diproses"].includes(data.status);
-  const canCancel  = ["menunggu", "diverifikasi", "diproses"].includes(data.status);
-  const canDownload = data.status === "selesai" && !!data.url_surat;
+  const cfg           = STATUS_MAP[data.status] ?? { bg: "#F3F4F6", text: "#6B7280", label: data.status };
+  const canUpload     = ["menunggu", "diverifikasi", "diproses"].includes(data.status);
+  const canCancel     = ["menunggu", "diverifikasi"].includes(data.status);
+  const canKonfirmasi = data.status === "siap_diambil";
 
   return (
     <View style={s.screen}>
@@ -469,8 +493,9 @@ export default function DetailPengajuanScreen() {
 
       {/* ── Fixed Footer ── */}
       <View style={[s.footer, { paddingBottom: footerPb }]}>
-        {/* Batalkan */}
-        {canCancel ? (
+
+        {/* Batalkan — tampil hanya jika bisa dibatalkan */}
+        {canCancel && (
           <TouchableOpacity
             style={[s.footerBtnOutline, cancelling && s.btnDisabled]}
             onPress={handleBatalkan}
@@ -483,29 +508,42 @@ export default function DetailPengajuanScreen() {
               <Text style={s.footerBtnOutlineText}>Batalkan{"\n"}Pengajuan</Text>
             )}
           </TouchableOpacity>
-        ) : (
-          <View style={s.footerBtnOutline}>
-            <Text style={[s.footerBtnOutlineText, { color: COLORS.textMuted }]}>
-              Tidak Dapat{"\n"}Dibatalkan
+        )}
+
+        {/* Konfirmasi Sudah Diambil — tampil saat siap_diambil */}
+        {canKonfirmasi && (
+          <TouchableOpacity
+            style={[s.footerBtnFilled, confirming && s.btnDisabled]}
+            onPress={handleKonfirmasiAmbil}
+            disabled={confirming}
+            activeOpacity={0.85}
+          >
+            {confirming ? (
+              <ActivityIndicator color={COLORS.white} size="small" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle-outline" size={18} color={COLORS.white} />
+                <Text style={s.footerBtnFilledText}>Sudah Diambil</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {/* Placeholder kosong — kalau tidak ada aksi sama sekali */}
+        {!canCancel && !canKonfirmasi && (
+          <View style={s.footerInfo}>
+            <Ionicons name="information-circle-outline" size={16} color={COLORS.textMuted} />
+            <Text style={s.footerInfoText}>
+              {data.status === "selesai"
+                ? "Pengajuan surat telah selesai."
+                : data.status === "dibatalkan"
+                  ? "Pengajuan ini sudah dibatalkan."
+                  : ["ditolak_staff", "ditolak_kepala"].includes(data.status)
+                    ? "Pengajuan ini ditolak."
+                    : "Pengajuan sedang diproses."}
             </Text>
           </View>
         )}
-
-        {/* Unduh Surat */}
-        <TouchableOpacity
-          style={[s.footerBtnFilled, !canDownload && s.footerBtnMuted]}
-          onPress={canDownload ? handleUnduh : undefined}
-          activeOpacity={canDownload ? 0.85 : 1}
-        >
-          <Ionicons
-            name="download-outline"
-            size={18}
-            color={canDownload ? COLORS.white : COLORS.textMuted}
-          />
-          <Text style={[s.footerBtnFilledText, !canDownload && { color: COLORS.textMuted }]}>
-            Unduh Surat
-          </Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -618,12 +656,16 @@ const s = StyleSheet.create({
     gap: SPACING.sm, backgroundColor: COLORS.primary,
     borderRadius: RADIUS.full, minHeight: 54, ...SHADOW.md,
   },
-  footerBtnMuted: {
-    backgroundColor: COLORS.inputBg,
-    shadowOpacity: 0, elevation: 0,
-  },
   footerBtnFilledText: {
     color: COLORS.white, fontSize: FONT.md, fontWeight: "700",
+  },
+  footerInfo: {
+    flex: 1, flexDirection: "row", alignItems: "center",
+    gap: SPACING.sm, justifyContent: "center",
+    paddingVertical: SPACING.md,
+  },
+  footerInfoText: {
+    fontSize: FONT.sm, color: COLORS.textMuted, fontWeight: "500",
   },
   btnDisabled: { opacity: 0.5 },
 });

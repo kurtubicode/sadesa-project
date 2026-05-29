@@ -18,7 +18,6 @@ interface PengajuanItem {
   status: string;
   tanggal: string;
   catatan: string | null;
-  url_surat?: string | null;
 }
 
 interface PengaduanItem {
@@ -37,7 +36,6 @@ interface FeedItem {
   title: string;
   status: string;
   tanggal: string;
-  canDownload: boolean;
 }
 
 // ─── Status maps ──────────────────────────────────────────────────────────────
@@ -45,11 +43,12 @@ interface FeedItem {
 const P_STATUS: Record<string, { bg: string; text: string; label: string }> = {
   menunggu:            { bg: "#FEF3C7", text: "#92400E", label: "Menunggu" },
   diproses:            { bg: "#DBEAFE", text: "#1E40AF", label: "Diproses" },
-  diverifikasi:        { bg: "#EDE9FE", text: "#5B21B6", label: "Verifikasi" },
+  diverifikasi:        { bg: "#EDE9FE", text: "#5B21B6", label: "Diverifikasi" },
   ditolak_staff:       { bg: "#FEE2E2", text: "#991B1B", label: "Ditolak" },
   menunggu_pengesahan: { bg: "#F3E8FF", text: "#6B21A8", label: "Pengesahan" },
-  disetujui:           { bg: "#D1FAE5", text: "#065F46", label: "Disetujui" },
+  disetujui:           { bg: "#FEF3C7", text: "#92400E", label: "Diproses" },
   ditolak_kepala:      { bg: "#FEE2E2", text: "#991B1B", label: "Ditolak" },
+  siap_diambil:        { bg: "#CCFBF1", text: "#0F766E", label: "Siap Diambil!" },
   selesai:             { bg: "#D1FAE5", text: "#065F46", label: "Selesai" },
   dibatalkan:          { bg: "#F3F4F6", text: "#6B7280", label: "Dibatalkan" },
 };
@@ -61,7 +60,7 @@ const A_STATUS: Record<string, { bg: string; text: string; label: string }> = {
   ditolak:  { bg: "#FEE2E2", text: "#991B1B", label: "Ditolak"  },
 };
 
-const P_IN_PROGRESS = ["menunggu", "diproses", "diverifikasi", "menunggu_pengesahan"];
+const P_IN_PROGRESS = ["menunggu", "diproses", "diverifikasi", "menunggu_pengesahan", "disetujui", "siap_diambil"];
 const A_IN_PROGRESS = ["menunggu", "diproses"];
 
 // ─── Sub-komponen ─────────────────────────────────────────────────────────────
@@ -129,7 +128,7 @@ export default function StatusScreen() {
   const stats = useMemo(() => {
     const inProgress = pengajuan.filter(p => P_IN_PROGRESS.includes(p.status)).length
                      + pengaduan.filter(a => A_IN_PROGRESS.includes(a.status)).length;
-    const selesai    = pengajuan.filter(p => ["selesai", "disetujui"].includes(p.status)).length
+    const selesai    = pengajuan.filter(p => p.status === "selesai").length
                      + pengaduan.filter(a => a.status === "selesai").length;
     return { inProgress, selesai };
   }, [pengajuan, pengaduan]);
@@ -144,7 +143,6 @@ export default function StatusScreen() {
       title: p.jenis_surat,
       status: p.status,
       tanggal: p.tanggal,
-      canDownload: p.status === "selesai" && !!p.url_surat,
     }));
     const adu: FeedItem[] = pengaduan.map(a => ({
       key: `a_${a.id}`,
@@ -154,7 +152,6 @@ export default function StatusScreen() {
       title: a.judul,
       status: a.status,
       tanggal: a.tanggal,
-      canDownload: a.status === "selesai",
     }));
     return [...aj, ...adu].sort((a, b) => {
       // keep order from server (by date desc approximation)
@@ -206,17 +203,17 @@ export default function StatusScreen() {
             onPress={() => goDetail(item)}
             activeOpacity={0.7}
           >
-            {item.canDownload ? (
-              <>
-                <Text style={s.actionText}>Unduh Bukti</Text>
-                <Ionicons name="download-outline" size={13} color={COLORS.primary} />
-              </>
-            ) : (
-              <>
-                <Text style={s.actionText}>Detail</Text>
-                <Ionicons name="chevron-forward" size={13} color={COLORS.primary} />
-              </>
-            )}
+            <Text style={[
+              s.actionText,
+              item.status === "siap_diambil" && { color: "#0F766E" },
+            ]}>
+              {item.status === "siap_diambil" ? "Konfirmasi →" : "Detail"}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={13}
+              color={item.status === "siap_diambil" ? "#0F766E" : COLORS.primary}
+            />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
