@@ -6,8 +6,10 @@ import {
     LayoutGrid,
     MapPin,
     Megaphone,
+    NotebookPen,
     Settings,
     ShieldCheck,
+    UserCheck,
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -31,14 +33,16 @@ import type { Auth } from '@/types/auth';
 
 const adminNavItems: NavItem[] = [
     { title: 'Dashboard',       href: dashboard(),          icon: LayoutGrid },
+    { title: 'Verifikasi Warga', href: '/admin/verifikasi-warga', icon: UserCheck },
     { title: 'Kelola Pengguna', href: '/admin/users',       icon: Users },
     { title: 'Pengajuan Surat', href: '/admin/pengajuan',   icon: FileText },
     { title: 'Pengaduan',       href: '/admin/pengaduan',   icon: Megaphone },
     { title: 'Master Surat',    href: '/admin/master-surat', icon: ClipboardList },
     { title: 'Data Master',     href: '/admin/data-master',  icon: MapPin },
     { title: 'Konten Desa',     href: '/admin/konten',       icon: BookOpen },
+    { title: 'Buku Tamu',       href: '/admin/buku-tamu',    icon: NotebookPen },
     { title: 'Audit Log',       href: '/admin/audit-log',    icon: ShieldCheck },
-    { title: 'Pengaturan',      href: '/settings',          icon: Settings },
+    { title: 'Pengaturan',      href: '/settings',           icon: Settings },
 ];
 
 const staffNavItems: NavItem[] = [
@@ -49,9 +53,9 @@ const staffNavItems: NavItem[] = [
 ];
 
 const kepalDesaNavItems: NavItem[] = [
-    { title: 'Dashboard',         href: dashboard(),              icon: LayoutGrid },
-    { title: 'Pengajuan Surat',   href: '/kepala-desa/pengajuan', icon: ShieldCheck },
-    { title: 'Pengaturan',        href: '/settings',              icon: Settings },
+    { title: 'Dashboard',         href: dashboard(),                  icon: LayoutGrid },
+    { title: 'Pengajuan Surat',   href: '/kepala-desa/pengajuan',     icon: ShieldCheck },
+    { title: 'Pengaturan',        href: '/settings',                  icon: Settings },
 ];
 
 const wargaNavItems: NavItem[] = [
