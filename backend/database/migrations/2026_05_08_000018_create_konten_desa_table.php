@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('admin_id')->constrained('users')->cascadeOnDelete();
             $table->string('judul');
             $table->string('slug')->unique();
-            $table->text('konten');
+            $table->longText('konten'); // <-- UBAH DI SINI JADI longText
             $table->enum('tipe', ['berita', 'pengumuman'])->default('berita');
             $table->enum('status', ['draft', 'published'])->default('draft');
             $table->timestamps();
