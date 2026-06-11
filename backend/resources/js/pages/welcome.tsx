@@ -13,6 +13,9 @@ import {
     Menu,
     Phone,
     Shield,
+    ShieldCheck,
+    FileCheck,
+    MessageSquare,
     Users,
     X,
     Youtube,
@@ -51,6 +54,7 @@ function Navbar({ user, canRegister }: { user: PageProps['auth']['user']; canReg
         { href: '#tentang', label: 'Tentang' },
         { href: '#fitur', label: 'Layanan' },
         { href: '#transparansi', label: 'Transparansi' },
+        { href: '#statistik', label: 'Statistik' },
         { href: '#berita', label: 'Berita' },
         { href: '#kontak', label: 'Kontak' },
     ];
@@ -516,6 +520,142 @@ function Transparansi() {
     );
 }
 
+// ─── Statistik ────────────────────────────────────────────────────────────────
+
+function Statistik() {
+    // Data dummy untuk simulasi statistik desa sesuai desain dashboard
+    const stats = [
+        { label: 'Total Penduduk', value: '3,842', trend: '+2.4%', icon: Users },
+        { label: 'Warga Terverifikasi', value: '2,150', trend: '+12%', icon: ShieldCheck },
+        { label: 'Pengajuan Selesai', value: '450', trend: '+5.7%', icon: FileCheck },
+        { label: 'Laporan Warga', value: '12', trend: '-2', icon: MessageSquare },
+    ];
+
+    const activities = [
+        { user: 'Budi Santoso', action: 'Mengajukan Surat Domisili', time: '2 jam yang lalu' },
+        { user: 'Siti Aminah', action: 'Melaporkan Lampu Jalan Mati', time: '5 jam yang lalu' },
+        { user: 'Admin Desa', action: 'Update APBDes 2025', time: 'Kemarin' },
+    ];
+
+    return (
+        <section id="statistik" className="bg-background py-24">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="mb-14 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+                    <div>
+                        <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+                            Data & Statistik
+                        </div>
+                        <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
+                            Monitoring Layanan Desa
+                        </h2>
+                    </div>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-12">
+                    {/* Stat Cards (Right side/Top in mobile) */}
+                    <div className="grid gap-4 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
+                        {stats.map((s, i) => (
+                            <div key={i} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400">
+                                    <s.icon className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <p className="text-xl font-bold text-foreground">{s.value}</p>
+                                        <span className={`text-[10px] font-bold ${s.trend.startsWith('+') ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                            {s.trend}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Chart Area (Main/Left side) */}
+                    <div className="lg:col-span-8">
+                        <div className="flex h-full flex-col rounded-3xl border border-border bg-card p-8 shadow-sm">
+                            <div className="mb-8 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-foreground">Aktivitas Pelayanan</h3>
+                                    <p className="text-xs text-muted-foreground">Statistik pengajuan surat 6 bulan terakhir</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
+                                        <span className="h-2 w-2 rounded-full bg-teal-500"></span> Pengajuan
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
+                                        <span className="h-2 w-2 rounded-full bg-blue-500"></span> Selesai
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Simulated Chart with SVG */}
+                            <div className="relative mt-auto flex-1 min-h-[250px]">
+                                <svg className="h-full w-full overflow-visible" preserveAspectRatio="none">
+                                    {/* Grid lines */}
+                                    {[0, 1, 2, 3, 4].map((i) => (
+                                        <line key={i} x1="0" y1={`${i * 25}%`} x2="100%" y2={`${i * 25}%`} className="stroke-border" strokeDasharray="4 4" />
+                                    ))}
+                                    {/* Line Graph 1 */}
+                                    <path 
+                                        d="M 0 180 Q 150 150 300 190 T 600 100 T 900 130 T 1200 80" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="3" 
+                                        className="text-teal-500" 
+                                        vectorEffect="non-scaling-stroke"
+                                    />
+                                    {/* Line Graph 2 */}
+                                    <path 
+                                        d="M 0 220 Q 150 200 300 230 T 600 160 T 900 180 T 1200 140" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="3" 
+                                        className="text-blue-500 opacity-60" 
+                                        vectorEffect="non-scaling-stroke"
+                                    />
+                                </svg>
+                                <div className="mt-4 flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                    <span>Jan</span>
+                                    <span>Feb</span>
+                                    <span>Mar</span>
+                                    <span>Apr</span>
+                                    <span>Mei</span>
+                                    <span>Jun</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recent Activity (Full width bottom or separate column) */}
+                    <div className="lg:col-span-12">
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                            <h3 className="mb-5 text-sm font-bold text-foreground">Aktivitas Terakhir</h3>
+                            <div className="space-y-4">
+                                {activities.map((a, i) => (
+                                    <div key={i} className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/30 p-3 transition hover:bg-muted/50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                                                {a.user.substring(0, 2)}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-foreground leading-none">{a.user}</p>
+                                                <p className="mt-1 text-[10px] text-muted-foreground">{a.action}</p>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] font-medium text-muted-foreground italic">{a.time}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
 // ─── Berita ───────────────────────────────────────────────────────────────────
 
 function Berita({ berita = [] }: { berita?: any[] }) {
@@ -744,6 +884,7 @@ export default function Welcome({ canRegister = true, berita = [] }: { canRegist
                 <Fitur />
                 <ProfilDesa />
                 <Transparansi />
+                <Statistik />
                 <Berita berita={berita} />
                 <Kontak />
                 <Footer canRegister={canRegister} />
