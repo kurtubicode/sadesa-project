@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\BukuTamuApiController;
+use App\Http\Controllers\Api\UlasanController;
 use App\Http\Controllers\Api\NotifikasiController;
 use App\Http\Controllers\Api\PengaduanController;
 use App\Http\Controllers\Api\PengesahanController;
@@ -211,6 +212,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/pengajuan/{id}',                  [PengajuanSuratController::class, 'batalkan']);
         // Konfirmasi surat sudah diambil (dipakai mobile app)
         Route::post('/pengajuan/{id}/konfirmasi-ambil',   [PengajuanSuratController::class, 'konfirmasiAmbil']);
+        // Ulasan kepuasan layanan
+        Route::post('/pengajuan/{id}/ulasan',             [UlasanController::class, 'store']);
 
         // Pengaduan
         Route::get('/pengaduan',                          [PengaduanController::class, 'index']);

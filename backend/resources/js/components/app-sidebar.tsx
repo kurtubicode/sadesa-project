@@ -59,7 +59,7 @@ const adminNavItems: NavItem[] = [
 const staffNavItems: NavItem[] = [
     { title: 'Dashboard',            href: dashboard(),                  icon: LayoutDashboard },
     { title: 'Antrean',              href: '/staff/pengajuan',           icon: ListOrdered },
-    { title: 'Pelayanan Loket',      href: '/staff/pengajuan',           icon: ConciergeBell },
+    { title: 'Pelayanan Loket',      href: '/staff/loket',               icon: ConciergeBell },
     { title: 'Verifikasi Berkas',    href: '/staff/pengajuan',           icon: FileCheck },
     { title: 'Surat Siap Cetak',     href: '/staff/pengajuan',           icon: Printer },
     { title: 'Pengaduan Warga',      href: '/staff/pengaduan',           icon: Megaphone },

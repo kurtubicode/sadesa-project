@@ -61,6 +61,7 @@ class PengajuanSuratController extends Controller
             'verifikasiBerkas.staff:id,name',
             'pengesahanPermohonan.kepalaDesa:id,name',
             'suratOutput:id,pengajuan_id,no_surat,path_file,tanggal_surat',
+            'ulasan:id,pengajuan_id,rating,komentar',
         ])
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
@@ -106,6 +107,9 @@ class PengajuanSuratController extends Controller
                                     ? asset('storage/' . $pengajuan->suratOutput->path_file)
                                     : null,
                 'no_surat'     => $pengajuan->suratOutput?->no_surat,
+                'ulasan'       => $pengajuan->ulasan
+                                    ? ['rating' => $pengajuan->ulasan->rating, 'komentar' => $pengajuan->ulasan->komentar]
+                                    : null,
             ],
         ]);
     }
