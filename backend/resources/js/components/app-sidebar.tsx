@@ -1,15 +1,26 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BarChart2,
     BookOpen,
     ClipboardList,
+    ConciergeBell,
+    FileBadge,
+    FileCheck,
     FileText,
-    LayoutGrid,
-    MapPin,
+    History,
+    LayoutDashboard,
+    ListOrdered,
+    LogOut,
+    Map,
     Megaphone,
+    Newspaper,
     NotebookPen,
+    Printer,
+    ScrollText,
+    Send,
     Settings,
-    ShieldCheck,
     UserCheck,
+    UserCog,
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -29,39 +40,44 @@ import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import type { Auth } from '@/types/auth';
 
-// ─── Nav items per role ───────────────────────────────────────────────────────
+// ─── Nav items per role (matching design kit NAV spec) ────────────────────────
 
 const adminNavItems: NavItem[] = [
-    { title: 'Dashboard',       href: dashboard(),          icon: LayoutGrid },
-    { title: 'Verifikasi Warga', href: '/admin/verifikasi-warga', icon: UserCheck },
-    { title: 'Kelola Pengguna', href: '/admin/users',       icon: Users },
-    { title: 'Pengajuan Surat', href: '/admin/pengajuan',   icon: FileText },
-    { title: 'Pengaduan',       href: '/admin/pengaduan',   icon: Megaphone },
-    { title: 'Master Surat',    href: '/admin/master-surat', icon: ClipboardList },
-    { title: 'Data Master',     href: '/admin/data-master',  icon: MapPin },
-    { title: 'Konten Desa',     href: '/admin/konten',       icon: BookOpen },
-    { title: 'Buku Tamu',       href: '/admin/buku-tamu',    icon: NotebookPen },
-    { title: 'Audit Log',       href: '/admin/audit-log',    icon: ShieldCheck },
-    { title: 'Pengaturan',      href: '/settings',           icon: Settings },
+    { title: 'Dashboard',            href: dashboard(),                  icon: LayoutDashboard },
+    { title: 'Data Kependudukan',    href: '/admin/verifikasi-warga',    icon: Users },
+    { title: 'Manajemen Akun',       href: '/admin/users',               icon: UserCog },
+    { title: 'Wilayah',              href: '/admin/data-master',         icon: Map },
+    { title: 'Layanan Surat',        href: '/admin/master-surat',        icon: FileText },
+    { title: 'Kategori Pengaduan',   href: '/admin/pengaduan',           icon: Megaphone },
+    { title: 'Berita Desa',          href: '/admin/konten',              icon: Newspaper },
+    { title: 'Broadcast WhatsApp',   href: '/admin/pengaturan',          icon: Send },
+    { title: 'Antrean',              href: '/admin/pengajuan',           icon: ListOrdered },
+    { title: 'Riwayat Kunjungan',    href: '/admin/buku-tamu',           icon: History },
+    { title: 'Audit Log',            href: '/admin/audit-log',           icon: ScrollText },
 ];
 
 const staffNavItems: NavItem[] = [
-    { title: 'Dashboard',         href: dashboard(),           icon: LayoutGrid },
-    { title: 'Antrian Pengajuan', href: '/staff/pengajuan',   icon: ClipboardList },
-    { title: 'Pengaduan',         href: '/staff/pengaduan',   icon: Megaphone },
-    { title: 'Pengaturan',        href: '/settings',           icon: Settings },
+    { title: 'Dashboard',            href: dashboard(),                  icon: LayoutDashboard },
+    { title: 'Antrean',              href: '/staff/pengajuan',           icon: ListOrdered },
+    { title: 'Pelayanan Loket',      href: '/staff/pengajuan',           icon: ConciergeBell },
+    { title: 'Verifikasi Berkas',    href: '/staff/pengajuan',           icon: FileCheck },
+    { title: 'Surat Siap Cetak',     href: '/staff/pengajuan',           icon: Printer },
+    { title: 'Pengaduan Warga',      href: '/staff/pengaduan',           icon: Megaphone },
+    { title: 'Buku Tamu',            href: '/admin/buku-tamu',           icon: BookOpen },
 ];
 
 const kepalDesaNavItems: NavItem[] = [
-    { title: 'Dashboard',         href: dashboard(),                  icon: LayoutGrid },
-    { title: 'Pengajuan Surat',   href: '/kepala-desa/pengajuan',     icon: ShieldCheck },
-    { title: 'Pengaturan',        href: '/settings',                  icon: Settings },
+    { title: 'Dashboard Statistik',  href: dashboard(),                  icon: LayoutDashboard },
+    { title: 'Pengesahan Dokumen',   href: '/kepala-desa/pengajuan',     icon: FileBadge },
+    { title: 'Laporan Bulanan',      href: '/settings',                  icon: BarChart2 },
 ];
 
 const wargaNavItems: NavItem[] = [
-    { title: 'Dashboard',         href: dashboard(),   icon: LayoutGrid },
-    { title: 'Informasi Desa',    href: '/informasi',  icon: BookOpen },
-    { title: 'Pengaturan',        href: '/settings',   icon: Settings },
+    { title: 'Dashboard',            href: dashboard(),                  icon: LayoutDashboard },
+    { title: 'Informasi Desa',       href: '/informasi',                 icon: Newspaper },
+    { title: 'Pengajuan Surat',      href: '/warga/pengajuan',           icon: FileText },
+    { title: 'Pengaduan',            href: '/warga/pengaduan',           icon: Megaphone },
+    { title: 'Verifikasi Identitas', href: '/verifikasi',                icon: UserCheck },
 ];
 
 const footerNavItems: NavItem[] = [];
