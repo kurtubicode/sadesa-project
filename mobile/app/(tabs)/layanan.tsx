@@ -1,6 +1,6 @@
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Alert,
+  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -75,7 +75,7 @@ export default function LayananScreen() {
           iconBg="#F3F4F6"
           title="Buku Tamu Digital"
           subtitle="Pencatatan kunjungan instansi resmi"
-          onPress={() => Alert.alert("Segera Hadir", "Fitur Buku Tamu Digital akan segera tersedia.")}
+          onPress={() => router.push("/buku-tamu" as any)}
         />
       </View>
 
