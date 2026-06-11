@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Newspaper, Megaphone, Clock, Share2 } from 'lucide-react';
+import PublicLayout from '@/layouts/public-layout';
 
 interface Artikel {
     id: number;
@@ -26,123 +27,136 @@ interface Props {
 
 export default function InformasiShow({ artikel, terkait }: Props) {
     return (
-        <div className="min-h-screen bg-background">
-            <Head title={`${artikel.judul} | SADESA`} />
+        <PublicLayout>
+            <Head title={`${artikel.judul} | Informasi Resmi Desa Cirangkong`} />
 
-            {/* Header */}
-            <header className="border-b bg-card shadow-sm">
-                <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-600">
-                            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                <polyline strokeLinecap="round" strokeLinejoin="round" points="9 22 9 12 15 12 15 22" />
-                            </svg>
-                        </div>
-                        <span className="font-bold text-foreground">SADESA</span>
-                    </Link>
-                    <Link href="/dashboard" className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
-                        Portal
-                    </Link>
-                </div>
-            </header>
-
-            <main className="mx-auto max-w-4xl px-4 py-8">
-                <div className="grid gap-8 lg:grid-cols-3">
-                    {/* Artikel utama */}
-                    <article className="col-span-2">
+            <div className="bg-gray-50 dark:bg-gray-900/40 min-h-screen py-10">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    {/* Breadcrumb / Back */}
+                    <nav className="mb-8">
                         <Link
                             href="/informasi"
-                            className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-teal-600 hover:text-teal-700 transition-colors"
                         >
-                            <ArrowLeft className="h-4 w-4" /> Kembali ke Informasi
+                            <ArrowLeft className="h-4 w-4" /> Kembali ke Pusat Informasi
                         </Link>
+                    </nav>
 
-                        {/* Meta */}
-                        <div className="mb-3 flex items-center gap-3">
-                            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${artikel.tipe === 'berita' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
-                                {artikel.tipe === 'berita' ? '📰 Berita' : '📢 Pengumuman'}
-                            </span>
+                    <div className="grid gap-10 lg:grid-cols-3">
+                        {/* Artikel utama */}
+                        <div className="lg:col-span-2">
+                            <article className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-800">
+                                {/* Header Artikel */}
+                                <div className="bg-gradient-to-r from-teal-600 to-emerald-600 px-8 py-10 text-white relative">
+                                    <div className="absolute top-0 right-0 p-10 opacity-10 font-bold text-8xl select-none">DOC</div>
+                                    <div className="relative z-10">
+                                        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+                                            {artikel.tipe === 'berita' ? <Newspaper className="h-3 w-3" /> : <Megaphone className="h-3 w-3" />}
+                                            {artikel.tipe}
+                                        </div>
+                                        <h1 className="text-2xl font-extrabold leading-tight sm:text-4xl">
+                                            {artikel.judul}
+                                        </h1>
+                                    </div>
+                                </div>
+
+                                {/* Meta Info */}
+                                <div className="flex flex-wrap items-center gap-6 border-b border-gray-100 bg-gray-50/50 px-8 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4 text-teal-600" />
+                                        <span>Penulis: {artikel.admin?.name ?? 'Pemerintah Desa'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-teal-600" />
+                                        <span>{new Date(artikel.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-teal-600" />
+                                        <span>Dilihat: [Statistik]</span>
+                                    </div>
+                                </div>
+
+                                {/* Konten */}
+                                <div className="p-8 sm:p-10">
+                                    <div className="prose prose-teal max-w-none dark:prose-invert">
+                                        {artikel.konten.split('\n').map((para, i) =>
+                                            para.trim() ? (
+                                                <p key={i} className="mb-6 text-base leading-relaxed text-gray-700 dark:text-gray-300">
+                                                    {para}
+                                                </p>
+                                            ) : null
+                                        )}
+                                    </div>
+
+                                    {/* Footer Artikel */}
+                                    <div className="mt-12 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t pt-8 border-gray-100 dark:border-gray-700">
+                                        <div className="text-sm text-gray-500 italic">
+                                            * Informasi ini dipublikasikan secara resmi oleh Pemerintah Desa Cirangkong.
+                                        </div>
+                                        <button className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 transition">
+                                            <Share2 className="h-4 w-4" /> Bagikan
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
                         </div>
 
-                        {/* Judul */}
-                        <h1 className="mb-4 text-2xl font-bold leading-tight text-foreground sm:text-3xl">
-                            {artikel.judul}
-                        </h1>
+                        {/* Sidebar */}
+                        <aside className="space-y-8">
+                            {/* Artikel Terkait */}
+                            <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-800">
+                                <h3 className="mb-5 flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
+                                    <Newspaper className="h-5 w-5 text-teal-600" />
+                                    {artikel.tipe === 'berita' ? 'Berita' : 'Pengumuman'} Lainnya
+                                </h3>
+                                {terkait.length === 0 ? (
+                                    <p className="text-sm text-gray-500 italic">Tidak ada artikel terkait lainnya.</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {terkait.map(item => (
+                                            <Link
+                                                key={item.id}
+                                                href={`/informasi/${item.slug}`}
+                                                className="group block"
+                                            >
+                                                <p className="mb-1 text-sm font-bold leading-snug text-gray-900 decoration-teal-500 decoration-2 group-hover:underline dark:text-white">
+                                                    {item.judul}
+                                                </p>
+                                                <p className="text-xs text-gray-400 font-medium">
+                                                    {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                </p>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
 
-                        {/* Info penulis & tanggal */}
-                        <div className="mb-6 flex flex-wrap items-center gap-4 border-b pb-5 text-sm text-muted-foreground">
-                            {artikel.admin && (
-                                <span className="flex items-center gap-1.5">
-                                    <User className="h-4 w-4" /> {artikel.admin.name}
-                                </span>
-                            )}
-                            <span className="flex items-center gap-1.5">
-                                <Calendar className="h-4 w-4" />
-                                {new Date(artikel.created_at).toLocaleDateString('id-ID', {
-                                    day: 'numeric', month: 'long', year: 'numeric',
-                                })}
-                            </span>
-                        </div>
-
-                        {/* Isi konten */}
-                        <div className="prose prose-sm max-w-none text-foreground">
-                            {artikel.konten.split('\n').map((para, i) =>
-                                para.trim() ? (
-                                    <p key={i} className="mb-4 leading-relaxed">
-                                        {para}
-                                    </p>
-                                ) : null
-                            )}
-                        </div>
-                    </article>
-
-                    {/* Sidebar: artikel terkait */}
-                    <aside className="space-y-4">
-                        <h3 className="font-semibold text-foreground">
-                            {artikel.tipe === 'berita' ? 'Berita' : 'Pengumuman'} Lainnya
-                        </h3>
-                        {terkait.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">Tidak ada artikel lain.</p>
-                        ) : (
-                            <div className="space-y-3">
-                                {terkait.map(item => (
+                                <div className="mt-8">
                                     <Link
-                                        key={item.id}
-                                        href={`/informasi/${item.slug}`}
-                                        className="block rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+                                        href="/informasi"
+                                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-50 py-3 text-sm font-bold text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:text-teal-400 transition"
                                     >
-                                        <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug hover:text-teal-600">
-                                            {item.judul}
-                                        </p>
-                                        <p className="mt-1.5 text-xs text-muted-foreground">
-                                            {new Date(item.created_at).toLocaleDateString('id-ID', {
-                                                day: 'numeric', month: 'short', year: 'numeric',
-                                            })}
-                                        </p>
+                                        Lihat Semua Informasi <ArrowLeft className="h-4 w-4 rotate-180" />
                                     </Link>
-                                ))}
+                                </div>
                             </div>
-                        )}
 
-                        <div className="pt-2">
-                            <Link
-                                href="/informasi"
-                                className="block rounded-lg bg-teal-50 px-4 py-3 text-center text-sm font-medium text-teal-700 hover:bg-teal-100 dark:bg-teal-900/20 dark:text-teal-400"
-                            >
-                                Lihat semua informasi →
-                            </Link>
-                        </div>
-                    </aside>
+                            {/* Banner Layanan */}
+                            <div className="rounded-3xl bg-gradient-to-br from-teal-700 to-emerald-800 p-8 text-white shadow-lg">
+                                <h3 className="mb-3 text-lg font-bold italic opacity-90">Butuh Pelayanan Desa?</h3>
+                                <p className="mb-6 text-sm leading-relaxed text-teal-100">
+                                    Sekarang urus surat keterangan dan laporan jadi lebih mudah via Portal SADESA.
+                                </p>
+                                <Link
+                                    href="/login"
+                                    className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-bold text-teal-800 shadow-md hover:bg-teal-50 transition"
+                                >
+                                    Masuk ke Portal
+                                </Link>
+                            </div>
+                        </aside>
+                    </div>
                 </div>
-            </main>
-
-            {/* Footer */}
-            <footer className="mt-12 border-t bg-card py-6">
-                <p className="text-center text-xs text-muted-foreground">
-                    © {new Date().getFullYear()} Pemerintah Desa Cirangkong · SADESA
-                </p>
-            </footer>
-        </div>
+            </div>
+        </PublicLayout>
     );
 }

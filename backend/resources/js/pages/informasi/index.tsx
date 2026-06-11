@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { Search, Calendar, Newspaper, Megaphone } from 'lucide-react';
 import { useState } from 'react';
+import PublicLayout from '@/layouts/public-layout';
 
 interface KontenItem {
     id: number;
@@ -8,6 +9,7 @@ interface KontenItem {
     slug: string;
     tipe: string;
     created_at: string;
+    konten: string;
     admin?: { id: number; name: string } | null;
 }
 
@@ -31,110 +33,111 @@ export default function InformasiIndex({ konten, filters }: Props) {
         router.get('/informasi', { ...filters, ...extra }, { preserveState: true });
 
     return (
-        <div className="min-h-screen bg-background">
-            <Head title="Informasi Desa | SADESA" />
+        <PublicLayout>
+            <Head title="Pusat Informasi & Berita Resmi | Pemerintah Desa Cirangkong" />
 
-            {/* Header */}
-            <header className="border-b bg-card shadow-sm">
-                <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-600">
-                            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                <polyline strokeLinecap="round" strokeLinejoin="round" points="9 22 9 12 15 12 15 22" />
-                            </svg>
+            <div className="bg-gray-50 dark:bg-gray-900/40 min-h-screen py-12">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    {/* Page title */}
+                    <div className="mb-10 text-center border-b pb-8 border-gray-200 dark:border-gray-800">
+                        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl tracking-tight">
+                            Pusat Informasi & Berita Resmi
+                        </h1>
+                        <p className="mt-3 max-w-2xl mx-auto text-base text-gray-500 dark:text-gray-400">
+                            Ikuti perkembangan terbaru, agenda kegiatan, pengumuman, dan transparansi pelayanan dari Pemerintah Desa Cirangkong.
+                        </p>
+                    </div>
+
+                    {/* Filter & Search */}
+                    <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="flex flex-wrap gap-2">
+                            {(['', 'berita', 'pengumuman'] as const).map(t => (
+                                <button
+                                    key={t}
+                                    onClick={() => applyFilter({ tipe: t })}
+                                    className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 ${(filters.tipe ?? '') === t ? 'bg-teal-600 text-white shadow-md shadow-teal-600/10' : 'border border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+                                >
+                                    {t === '' ? 'Semua Informasi' : t === 'berita' ? <><Newspaper className="h-4 w-4" /> Berita</> : <><Megaphone className="h-4 w-4" /> Pengumuman</>}
+                                </button>
+                            ))}
                         </div>
-                        <span className="font-bold text-foreground">SADESA</span>
-                    </Link>
-                    <Link href="/dashboard" className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
-                        Portal
-                    </Link>
-                </div>
-            </header>
 
-            <main className="mx-auto max-w-4xl px-4 py-8">
-                {/* Page title */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-foreground">Informasi Desa</h1>
-                    <p className="text-sm text-muted-foreground">Berita dan pengumuman terbaru dari Desa Cirangkong</p>
-                </div>
-
-                {/* Filter */}
-                <div className="mb-6 flex flex-wrap gap-3">
-                    <form onSubmit={e => { e.preventDefault(); applyFilter({ search }); }} className="flex gap-2">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <input
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                placeholder="Cari berita…"
-                                className="w-56 rounded-lg border bg-background py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                            />
-                        </div>
-                        <button type="submit" className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
-                            Cari
-                        </button>
-                    </form>
-                    <div className="flex gap-2">
-                        {(['', 'berita', 'pengumuman'] as const).map(t => (
-                            <button
-                                key={t}
-                                onClick={() => applyFilter({ tipe: t })}
-                                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${(filters.tipe ?? '') === t ? 'bg-teal-600 text-white' : 'border hover:bg-muted text-muted-foreground'}`}
-                            >
-                                {t === '' ? 'Semua' : t === 'berita' ? '📰 Berita' : '📢 Pengumuman'}
+                        <form onSubmit={e => { e.preventDefault(); applyFilter({ search }); }} className="flex gap-2 w-full md:w-auto">
+                            <div className="relative w-full md:w-72">
+                                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                                <input
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Cari kata kunci berita…"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-teal-500 focus:bg-white dark:focus:bg-gray-800 focus:ring-2 focus:ring-teal-500/20"
+                                />
+                            </div>
+                            <button type="submit" className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-teal-700 transition shadow-sm">
+                                Cari
                             </button>
-                        ))}
+                        </form>
                     </div>
+
+                    {/* Grid artikel */}
+                    {konten.data.length === 0 ? (
+                        <div className="py-24 text-center rounded-3xl bg-white dark:bg-gray-800 shadow-sm border">
+                            <Newspaper className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+                            <h3 className="text-base font-bold text-gray-700 dark:text-gray-300">Belum Ada Informasi</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Tidak ada berita atau pengumuman yang sesuai dengan kriteria pencarian Anda.</p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {konten.data.map(item => (
+                                <article key={item.id} className="group flex flex-col rounded-2xl border border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+                                    <div className="h-44 rounded-t-2xl bg-gradient-to-br from-teal-600 to-emerald-700 p-6 flex flex-col justify-between text-white relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-8 opacity-10 font-bold text-7xl select-none">GOV</div>
+                                        <div>
+                                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider bg-white/20 text-white backdrop-blur-sm`}>
+                                                {item.tipe}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-xs text-teal-100 font-medium">
+                                            <Calendar className="h-3.5 w-3.5" />
+                                            {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-1 flex-col p-6">
+                                        <h2 className="mb-3 text-lg font-bold leading-snug text-gray-900 group-hover:text-teal-600 dark:text-white dark:group-hover:text-teal-400 line-clamp-2">
+                                            <Link href={`/informasi/${item.slug}`}>
+                                                {item.judul}
+                                            </Link>
+                                        </h2>
+                                        <p className="mb-5 text-sm leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-3" dangerouslySetInnerHTML={{ __html: item.konten.substring(0, 120) + '...' }} />
+                                        <div className="mt-auto flex items-center justify-between border-t pt-4 border-gray-100 dark:border-gray-700">
+                                            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                                                Oleh: {item.admin?.name ?? 'Pemerintah Desa'}
+                                            </span>
+                                            <Link href={`/informasi/${item.slug}`} className="flex items-center gap-1 text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400">
+                                                Baca Artikel →
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Pagination */}
+                    {konten.last_page > 1 && (
+                        <div className="mt-12 flex items-center justify-center gap-1">
+                            {konten.links.map((link, i) => (
+                                <Link
+                                    key={i}
+                                    href={link.url ?? '#'}
+                                    preserveState
+                                    className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${link.active ? 'bg-teal-600 text-white shadow-md shadow-teal-600/10' : 'border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300'} ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
-
-                {/* Grid artikel */}
-                {konten.data.length === 0 ? (
-                    <div className="py-16 text-center text-muted-foreground">
-                        Tidak ada informasi yang ditemukan.
-                    </div>
-                ) : (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        {konten.data.map(item => (
-                            <Link
-                                key={item.id}
-                                href={`/informasi/${item.slug}`}
-                                className="group rounded-xl border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
-                            >
-                                <div className="mb-3 flex items-center justify-between">
-                                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${item.tipe === 'berita' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
-                                        {item.tipe === 'berita' ? '📰 Berita' : '📢 Pengumuman'}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </span>
-                                </div>
-                                <h2 className="font-semibold text-foreground group-hover:text-teal-600 line-clamp-2 leading-snug">
-                                    {item.judul}
-                                </h2>
-                                {item.admin && (
-                                    <p className="mt-2 text-xs text-muted-foreground">Oleh: {item.admin.name}</p>
-                                )}
-                            </Link>
-                        ))}
-                    </div>
-                )}
-
-                {/* Pagination */}
-                {konten.last_page > 1 && (
-                    <div className="mt-8 flex items-center justify-center gap-1">
-                        {konten.links.map((link, i) => (
-                            <Link
-                                key={i}
-                                href={link.url ?? '#'}
-                                preserveState
-                                className={`rounded-md px-3 py-1.5 text-sm ${link.active ? 'bg-teal-600 text-white' : 'border hover:bg-muted text-muted-foreground'} ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
-            </main>
-        </div>
+            </div>
+        </PublicLayout>
     );
 }

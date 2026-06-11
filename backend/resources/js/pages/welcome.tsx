@@ -518,14 +518,7 @@ function Transparansi() {
 
 // ─── Berita ───────────────────────────────────────────────────────────────────
 
-function Berita() {
-    const berita = [
-        { judul: 'Peluncuran SADESA — Sahabat Digital Desa Cirangkong', tanggal: '15 Mei 2025', kategori: 'Pengumuman', kategoriColor: 'bg-blue-100 text-blue-700', ringkasan: 'Desa Cirangkong resmi meluncurkan platform digital SADESA untuk meningkatkan kualitas pelayanan kepada masyarakat.' },
-        { judul: 'Musyawarah Desa Pembahasan APBDes 2025', tanggal: '8 Mei 2025', kategori: 'Kegiatan', kategoriColor: 'bg-teal-100 text-teal-700', ringkasan: 'Pemerintah Desa Cirangkong mengadakan Musyawarah Desa untuk membahas Rancangan APBDes tahun 2025.' },
-        { judul: 'Program Vaksinasi Massal untuk Warga Desa', tanggal: '2 Mei 2025', kategori: 'Kesehatan', kategoriColor: 'bg-green-100 text-green-700', ringkasan: 'Pemerintah Desa bekerja sama dengan Puskesmas mengadakan program vaksinasi gratis untuk seluruh warga.' },
-        { judul: 'Pelatihan UMKM Digital bagi Pelaku Usaha Lokal', tanggal: '28 April 2025', kategori: 'Pemberdayaan', kategoriColor: 'bg-orange-100 text-orange-700', ringkasan: 'Desa Cirangkong mengadakan pelatihan pemasaran digital dan e-commerce bagi pelaku UMKM lokal.' },
-    ];
-
+function Berita({ berita = [] }: { berita?: any[] }) {
     return (
         <section id="berita" className="bg-white py-24 dark:bg-gray-900">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -538,34 +531,38 @@ function Berita() {
                             Berita & Pengumuman Terbaru
                         </h2>
                     </div>
-                    <a href="#" className="flex items-center gap-1.5 text-sm font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
+                    <Link href="/informasi" className="flex items-center gap-1.5 text-sm font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
                         Lihat Semua <ChevronRight className="h-4 w-4" />
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    {berita.map((b, i) => (
+                    {berita.length > 0 ? berita.map((b, i) => (
                         <article key={i} className="group flex flex-col rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
                             <div className="h-36 rounded-t-2xl bg-gradient-to-br from-teal-600 to-emerald-700" />
                             <div className="flex flex-1 flex-col p-5">
                                 <div className="mb-3 flex items-center gap-2">
-                                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${b.kategoriColor} dark:bg-opacity-20`}>
-                                        {b.kategori}
+                                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${b.tipe === 'pengumuman' ? 'bg-blue-100 text-blue-700' : 'bg-teal-100 text-teal-700'} dark:bg-opacity-20 uppercase`}>
+                                        {b.tipe}
                                     </span>
-                                    <span className="text-xs text-gray-400">{b.tanggal}</span>
+                                    <span className="text-xs text-gray-400">
+                                        {new Date(b.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </span>
                                 </div>
-                                <h3 className="mb-2 flex-1 text-sm font-bold leading-snug text-gray-900 group-hover:text-teal-600 dark:text-white dark:group-hover:text-teal-400">
+                                <h3 className="mb-2 flex-1 text-sm font-bold leading-snug text-gray-900 group-hover:text-teal-600 dark:text-white dark:group-hover:text-teal-400 line-clamp-2">
                                     {b.judul}
                                 </h3>
-                                <p className="mb-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-2">
-                                    {b.ringkasan}
-                                </p>
-                                <a href="#" className="flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
+                                <p className="mb-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-2" dangerouslySetInnerHTML={{ __html: b.konten.substring(0, 100) + '...' }} />
+                                <Link href={`/informasi/${b.slug}`} className="flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
                                     Baca selengkapnya <ChevronRight className="h-3.5 w-3.5" />
-                                </a>
+                                </Link>
                             </div>
                         </article>
-                    ))}
+                    )) : (
+                        <div className="col-span-full py-12 text-center text-gray-500">
+                            Belum ada berita terbaru.
+                        </div>
+                    )}
                 </div>
             </div>
         </section>
@@ -589,9 +586,18 @@ function Kontak() {
                     {/* Info kontak */}
                     <div className="space-y-5">
                         {[
-                            { icon: MapPin, title: 'Alamat', lines: ['Kantor Desa Cirangkong', 'Jl. Raya Cirangkong No. 123', 'Kabupaten Bandung, Jawa Barat'] },
-                            { icon: Phone, title: 'Telepon', lines: ['(022) xxxx-xxxx'] },
-                            { icon: Mail, title: 'Email', lines: ['desacirangkong@example.com'] },
+                            { 
+                                icon: MapPin, 
+                                title: 'Alamat', 
+                                lines: [
+                                    'Pemerintah Desa Cirangkong', 
+                                    'Jl. Lempar - Cirangkong KM. 08', 
+                                    'Desa Cirangkong Kecamatan Cijambe',
+                                    'Kabupaten Subang, 41286'
+                                ] 
+                            },
+                            { icon: Phone, title: 'Telepon', lines: ['(0260) xxxx-xxxx'] },
+                            { icon: Mail, title: 'Email', lines: ['desacirangkong@subang.go.id'] },
                             { icon: Clock, title: 'Jam Pelayanan', lines: ['Senin – Kamis: 08.00 – 15.00 WIB', 'Jumat: 08.00 – 11.30 WIB', 'Sabtu – Minggu: Libur'] },
                         ].map((c, i) => (
                             <div key={i} className="flex gap-4">
@@ -625,14 +631,18 @@ function Kontak() {
                         </div>
                     </div>
 
-                    {/* Map placeholder */}
+                    {/* Map */}
                     <div className="lg:col-span-2">
-                        <div className="flex h-full min-h-64 items-center justify-center rounded-2xl border bg-gradient-to-br from-teal-50 to-emerald-50 dark:border-gray-700 dark:from-teal-900/10 dark:to-emerald-900/10">
-                            <div className="text-center">
-                                <MapPin className="mx-auto mb-3 h-12 w-12 text-teal-300 dark:text-teal-700" />
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Peta Lokasi</p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500">Kantor Desa Cirangkong</p>
-                            </div>
+                        <div className="overflow-hidden rounded-2xl border bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900 h-full min-h-[400px]">
+                            <iframe 
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31718.42340576395!2d107.7262447!3d-6.4251765!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6923c6f05a9b73%3A0xc669f6f6f9c9a66a!2sDesa%20Cirangkong!5e0!3m2!1sid!2sid!4v1717000000000!5m2!1sid!2sid" 
+                                width="100%" 
+                                height="100%" 
+                                style={{ border: 0 }} 
+                                allowFullScreen={true} 
+                                loading="lazy" 
+                                referrerPolicy="no-referrer-when-downgrade"
+                            ></iframe>
                         </div>
                     </div>
                 </div>
@@ -668,8 +678,8 @@ function Footer({ canRegister }: { canRegister: boolean }) {
                     <div>
                         <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">Navigasi</p>
                         <ul className="space-y-2">
-                            {['Beranda', 'Profil Desa', 'Layanan', 'Berita', 'Transparansi', 'Kontak'].map(l => (
-                                <li key={l}><a href="#" className="text-sm text-gray-400 transition hover:text-teal-400">{l}</a></li>
+                            {['Beranda', 'Tentang', 'Layanan', 'Berita', 'Transparansi', 'Kontak'].map(l => (
+                                <li key={l}><a href={`#${l.toLowerCase()}`} className="text-sm text-gray-400 transition hover:text-teal-400">{l}</a></li>
                             ))}
                         </ul>
                     </div>
@@ -706,10 +716,10 @@ function Footer({ canRegister }: { canRegister: boolean }) {
 
                 <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                     <p className="text-xs text-gray-500">
-                        © {new Date().getFullYear()} Desa Cirangkong. SADESA — Sahabat Digital Desa. All Rights Reserved.
+                        © {new Date().getFullYear()} Pemerintah Desa Cirangkong. SADESA — Sahabat Digital Desa.
                     </p>
                     <p className="text-xs text-gray-600">
-                        Developed with ❤️ for Desa Cirangkong
+                        Kecamatan Cijambe, Kabupaten Subang
                     </p>
                 </div>
             </div>
@@ -719,7 +729,7 @@ function Footer({ canRegister }: { canRegister: boolean }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function Welcome({ canRegister = true }: { canRegister?: boolean }) {
+export default function Welcome({ canRegister = true, berita = [] }: { canRegister?: boolean; berita?: any[] }) {
     const { auth } = usePage<PageProps>().props;
     const user = auth?.user ?? null;
 
@@ -733,7 +743,7 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                 <Fitur />
                 <ProfilDesa />
                 <Transparansi />
-                <Berita />
+                <Berita berita={berita} />
                 <Kontak />
                 <Footer canRegister={canRegister} />
             </div>

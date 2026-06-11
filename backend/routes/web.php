@@ -21,9 +21,9 @@ use App\Http\Controllers\Staff\StaffPengajuanController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+use App\Http\Controllers\WelcomeController;
+
+Route::get('/', [WelcomeController::class, 'index'])->name('home');
 
 // ─── Informasi publik (tanpa auth) ────────────────────────────────────────────
 Route::get('informasi',        [InformasiController::class, 'index'])->name('informasi.index');
