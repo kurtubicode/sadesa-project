@@ -126,7 +126,7 @@ export default function BukuTamuScreen() {
         {/* Success card */}
         <View style={styles.successContainer}>
           <View style={styles.successIconWrap}>
-            <Ionicons name="checkmark-circle" size={60} color="#0F766E" />
+            <Ionicons name="checkmark-circle" size={60} color={COLORS.primary} />
           </View>
           <Text style={styles.successTitle}>Terima Kasih!</Text>
           <Text style={styles.successDesc}>
@@ -135,7 +135,7 @@ export default function BukuTamuScreen() {
           </Text>
 
           <TouchableOpacity style={styles.btnOutline} onPress={handleReset}>
-            <Ionicons name="refresh" size={16} color="#0F766E" />
+            <Ionicons name="refresh" size={16} color={COLORS.primary} />
             <Text style={styles.btnOutlineText}>Isi Ulang (Tamu Lain)</Text>
           </TouchableOpacity>
 
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   hero: {
     alignItems:      "center",
     paddingVertical: SPACING.lg,
-    backgroundColor: "#0F766E",
+    backgroundColor: COLORS.primary,
     borderRadius:    RADIUS.xl,
     gap:             6,
   },
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     alignItems:     "center",
     justifyContent: "center",
     gap:            8,
-    backgroundColor: "#0F766E",
+    backgroundColor: COLORS.primary,
     borderRadius:   RADIUS.xl,
     paddingVertical: SPACING.md,
     marginTop:      4,
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     width:           96,
     height:          96,
     borderRadius:    48,
-    backgroundColor: "#CCFBF1",
+    backgroundColor: COLORS.primaryLight,
     alignItems:      "center",
     justifyContent:  "center",
     marginBottom:    SPACING.sm,
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     alignItems:     "center",
     gap:            6,
     borderWidth:    1.5,
-    borderColor:    "#0F766E",
+    borderColor:    COLORS.primary,
     borderRadius:   RADIUS.xl,
     paddingVertical:  SPACING.sm + 2,
     paddingHorizontal: SPACING.xl,
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   btnOutlineText: {
     fontSize:   14,
     fontFamily: FONT.semibold,
-    color:      "#0F766E",
+    color:      COLORS.primary,
   },
   btnBack: {
     paddingVertical: SPACING.sm,
