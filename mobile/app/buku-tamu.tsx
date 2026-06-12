@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -17,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import api from "@/lib/api";
 import { getUser, UserData } from "@/lib/userStorage";
 import { COLORS, FONT, RADIUS, SHADOW, SPACING } from "@/constants/theme";
+import QrScanner from "@/components/QrScanner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,16 +34,21 @@ interface FormErrors {
   keperluan?: string;
 }
 
+type Tab = "manual" | "scan";
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function BukuTamuScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [user, setUser]         = useState<UserData | null>(null);
-  const [loading, setLoading]   = useState(false);
-  const [success, setSuccess]   = useState(false);
-  const [errors, setErrors]     = useState<FormErrors>({});
+  const [user, setUser]           = useState<UserData | null>(null);
+  const [tab, setTab]             = useState<Tab>("manual");
+  const [showScanner, setShowScanner] = useState(false);
+  const [qrVerified, setQrVerified]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [success, setSuccess]     = useState(false);
+  const [errors, setErrors]       = useState<FormErrors>({});
 
   const [form, setForm] = useState<FormData>({
     nama_pengunjung: "",
@@ -50,7 +57,6 @@ export default function BukuTamuScreen() {
     no_hp:           "",
   });
 
-  // Auto-fill from profile
   useEffect(() => {
     getUser().then((u) => {
       setUser(u);
@@ -71,24 +77,39 @@ export default function BukuTamuScreen() {
     }
   };
 
+  const handleTabChange = (next: Tab) => {
+    setTab(next);
+    if (next === "scan") setShowScanner(true);
+  };
+
+  const handleScanned = (_url: string) => {
+    setShowScanner(false);
+    setTab("manual");
+    setQrVerified(true);
+  };
+
+  const handleScannerClose = () => {
+    setShowScanner(false);
+    setTab("manual");
+  };
+
   const validate = (): boolean => {
-    const newErrors: FormErrors = {};
-    if (!form.nama_pengunjung.trim()) newErrors.nama_pengunjung = "Nama wajib diisi.";
-    if (!form.keperluan.trim())       newErrors.keperluan       = "Keperluan wajib diisi.";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const errs: FormErrors = {};
+    if (!form.nama_pengunjung.trim()) errs.nama_pengunjung = "Nama wajib diisi.";
+    if (!form.keperluan.trim())       errs.keperluan       = "Keperluan wajib diisi.";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!validate()) return;
-
     setLoading(true);
     try {
       await api.post("/api/buku-tamu", {
         nama_pengunjung: form.nama_pengunjung.trim(),
-        instansi:        form.instansi.trim()   || null,
+        instansi:        form.instansi.trim()  || null,
         keperluan:       form.keperluan.trim(),
-        no_hp:           form.no_hp.trim()       || null,
+        no_hp:           form.no_hp.trim()     || null,
       });
       setSuccess(true);
     } catch (err: any) {
@@ -101,6 +122,8 @@ export default function BukuTamuScreen() {
 
   const handleReset = () => {
     setSuccess(false);
+    setQrVerified(false);
+    setTab("manual");
     setForm({
       nama_pengunjung: user?.name  ?? "",
       instansi:        "",
@@ -110,36 +133,41 @@ export default function BukuTamuScreen() {
     setErrors({});
   };
 
-  // ── Success screen ─────────────────────────────────────────────────────────
+  // ── QR Scanner Modal ───────────────────────────────────────────────────────
+  if (showScanner) {
+    return (
+      <Modal visible animationType="slide" statusBarTranslucent>
+        <QrScanner onScanned={handleScanned} onClose={handleScannerClose} />
+      </Modal>
+    );
+  }
+
+  // ── Success ────────────────────────────────────────────────────────────────
   if (success) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <Ionicons name="arrow-back" size={22} color={COLORS.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Buku Tamu Digital</Text>
-          <View style={styles.backBtn} />
+          <Text style={styles.headerTitle}>Buku Tamu</Text>
+          <View style={styles.iconBtn} />
         </View>
 
-        {/* Success card */}
         <View style={styles.successContainer}>
           <View style={styles.successIconWrap}>
-            <Ionicons name="checkmark-circle" size={60} color="#0F766E" />
+            <Ionicons name="checkmark-circle" size={60} color={COLORS.primary} />
           </View>
           <Text style={styles.successTitle}>Terima Kasih!</Text>
           <Text style={styles.successDesc}>
             Data kunjungan Anda telah berhasil tercatat.{"\n"}
             Silakan masuk ke loket pelayanan.
           </Text>
-
           <TouchableOpacity style={styles.btnOutline} onPress={handleReset}>
-            <Ionicons name="refresh" size={16} color="#0F766E" />
+            <Ionicons name="refresh" size={16} color={COLORS.primary} />
             <Text style={styles.btnOutlineText}>Isi Ulang (Tamu Lain)</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnBack} onPress={() => router.back()}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.btnBack}>
             <Text style={styles.btnBackText}>Kembali</Text>
           </TouchableOpacity>
         </View>
@@ -154,12 +182,12 @@ export default function BukuTamuScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
           <Ionicons name="arrow-back" size={22} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Buku Tamu Digital</Text>
-        <View style={styles.backBtn} />
+        <Text style={styles.headerTitle}>Buku Tamu</Text>
+        <View style={styles.iconBtn} />
       </View>
 
       <ScrollView
@@ -167,21 +195,53 @@ export default function BukuTamuScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Hero mini */}
-        <View style={styles.hero}>
-          <View style={styles.heroIcon}>
-            <Ionicons name="book" size={28} color="#fff" />
-          </View>
-          <Text style={styles.heroTitle}>Daftar Kunjungan</Text>
-          <Text style={styles.heroSub}>Kantor Desa Cirangkong</Text>
+        {/* Heading */}
+        <View style={styles.headingWrap}>
+          <Text style={styles.headingLabel}>Layanan Digital</Text>
+          <Text style={styles.headingTitle}>Pendaftaran Kunjungan</Text>
+          <Text style={styles.headingDesc}>
+            Silakan isi formulir di bawah ini untuk mendata kunjungan Anda ke SADESA.
+          </Text>
         </View>
 
-        {/* Form card */}
-        <View style={styles.card}>
-          <Text style={styles.cardHint}>
-            Harap isi data di bawah ini sebelum memulai pelayanan
-          </Text>
+        {/* Tab toggle */}
+        <View style={styles.tabWrap}>
+          <TouchableOpacity
+            style={[styles.tabBtn, tab === "manual" && styles.tabBtnActive]}
+            onPress={() => handleTabChange("manual")}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.tabBtnText, tab === "manual" && styles.tabBtnTextActive]}>
+              Isi Manual
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, tab === "scan" && styles.tabBtnActive]}
+            onPress={() => handleTabChange("scan")}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="qr-code-outline"
+              size={14}
+              color={tab === "scan" ? COLORS.primary : COLORS.textMuted}
+              style={{ marginRight: 4 }}
+            />
+            <Text style={[styles.tabBtnText, tab === "scan" && styles.tabBtnTextActive]}>
+              Scan QR
+            </Text>
+          </TouchableOpacity>
+        </View>
 
+        {/* Badge QR terverifikasi */}
+        {qrVerified && (
+          <View style={styles.verifiedBadge}>
+            <Ionicons name="checkmark-circle" size={16} color="#16a34a" />
+            <Text style={styles.verifiedText}>QR Code terverifikasi</Text>
+          </View>
+        )}
+
+        {/* Form */}
+        <View style={styles.card}>
           {/* Nama */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
@@ -191,7 +251,7 @@ export default function BukuTamuScreen() {
               style={[styles.input, errors.nama_pengunjung && styles.inputError]}
               value={form.nama_pengunjung}
               onChangeText={(v) => setField("nama_pengunjung", v)}
-              placeholder="Masukkan nama lengkap Anda"
+              placeholder="Masukkan nama lengkap"
               placeholderTextColor={COLORS.textPlaceholder}
               autoCapitalize="words"
             />
@@ -203,14 +263,14 @@ export default function BukuTamuScreen() {
           {/* Instansi */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
-              Instansi / Asal{" "}
+              Instansi / Asal Desa{" "}
               <Text style={styles.optional}>(opsional)</Text>
             </Text>
             <TextInput
               style={styles.input}
               value={form.instansi}
               onChangeText={(v) => setField("instansi", v)}
-              placeholder="Nama instansi, sekolah, atau alamat asal"
+              placeholder="Masukkan nama instansi atau desa"
               placeholderTextColor={COLORS.textPlaceholder}
               autoCapitalize="words"
             />
@@ -219,13 +279,13 @@ export default function BukuTamuScreen() {
           {/* Keperluan */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
-              Keperluan <Text style={styles.required}>*</Text>
+              Tujuan Kunjungan <Text style={styles.required}>*</Text>
             </Text>
             <TextInput
               style={[styles.input, styles.inputMultiline, errors.keperluan && styles.inputError]}
               value={form.keperluan}
               onChangeText={(v) => setField("keperluan", v)}
-              placeholder="Jelaskan keperluan kunjungan Anda"
+              placeholder="Jelaskan tujuan kunjungan Anda"
               placeholderTextColor={COLORS.textPlaceholder}
               multiline
               numberOfLines={3}
@@ -262,10 +322,7 @@ export default function BukuTamuScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <>
-                <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
-                <Text style={styles.btnSubmitText}>Daftar Kunjungan</Text>
-              </>
+              <Text style={styles.btnSubmitText}>Hadir / Submit</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -284,20 +341,20 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    flexDirection:   "row",
-    alignItems:      "center",
-    justifyContent:  "space-between",
+    flexDirection:     "row",
+    alignItems:        "center",
+    justifyContent:    "space-between",
     paddingHorizontal: SPACING.md,
-    paddingBottom:   SPACING.sm,
-    backgroundColor: COLORS.card,
+    paddingBottom:     SPACING.sm,
+    backgroundColor:   COLORS.card,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    alignItems:     "center",
-    justifyContent: "center",
+  iconBtn: {
+    width:           36,
+    height:          36,
+    alignItems:      "center",
+    justifyContent:  "center",
   },
   headerTitle: {
     fontSize:   16,
@@ -309,37 +366,81 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: SPACING.md,
     gap:     SPACING.md,
+    paddingBottom: SPACING.xl * 2,
   },
 
-  // Hero
-  hero: {
-    alignItems:      "center",
-    paddingVertical: SPACING.lg,
-    backgroundColor: "#0F766E",
-    borderRadius:    RADIUS.xl,
-    gap:             6,
+  // Heading
+  headingWrap: {
+    gap: 6,
+    paddingHorizontal: 2,
   },
-  heroIcon: {
-    width:           56,
-    height:          56,
-    borderRadius:    16,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignItems:      "center",
-    justifyContent:  "center",
-    marginBottom:    4,
+  headingLabel: {
+    fontSize:      11,
+    fontFamily:    FONT.semibold,
+    color:         COLORS.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
   },
-  heroTitle: {
-    fontSize:   18,
+  headingTitle: {
+    fontSize:   24,
     fontFamily: FONT.bold,
-    color:      "#fff",
+    color:      COLORS.text,
+    lineHeight: 30,
   },
-  heroSub: {
+  headingDesc: {
     fontSize:   13,
     fontFamily: FONT.regular,
-    color:      "rgba(255,255,255,0.75)",
+    color:      COLORS.textSecondary,
+    lineHeight: 20,
   },
 
-  // Card
+  // Tab toggle
+  tabWrap: {
+    flexDirection:    "row",
+    backgroundColor:  COLORS.inputBg,
+    borderRadius:     RADIUS.xl,
+    padding:          4,
+  },
+  tabBtn: {
+    flex:            1,
+    flexDirection:   "row",
+    alignItems:      "center",
+    justifyContent:  "center",
+    paddingVertical: SPACING.sm,
+    borderRadius:    RADIUS.lg,
+  },
+  tabBtnActive: {
+    backgroundColor: COLORS.card,
+    ...SHADOW.sm,
+  },
+  tabBtnText: {
+    fontSize:   14,
+    fontFamily: FONT.semibold,
+    color:      COLORS.textMuted,
+  },
+  tabBtnTextActive: {
+    color: COLORS.primary,
+  },
+
+  // QR verified badge
+  verifiedBadge: {
+    flexDirection:   "row",
+    alignItems:      "center",
+    gap:             6,
+    backgroundColor: "#f0fdf4",
+    borderWidth:     1,
+    borderColor:     "#bbf7d0",
+    borderRadius:    RADIUS.md,
+    paddingVertical:  SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  verifiedText: {
+    fontSize:   13,
+    fontFamily: FONT.semibold,
+    color:      "#16a34a",
+  },
+
+  // Form card
   card: {
     backgroundColor: COLORS.card,
     borderRadius:    RADIUS.xl,
@@ -347,47 +448,36 @@ const styles = StyleSheet.create({
     gap:             SPACING.md,
     ...SHADOW.sm,
   },
-  cardHint: {
-    fontSize:    13,
-    fontFamily:  FONT.regular,
-    color:       COLORS.textMuted,
-    textAlign:   "center",
-    marginBottom: 4,
-  },
 
   // Fields
-  fieldGroup: {
-    gap: 6,
-  },
+  fieldGroup: { gap: 6 },
   label: {
     fontSize:   13,
     fontFamily: FONT.semibold,
     color:      COLORS.text,
   },
-  required: {
-    color: COLORS.danger,
-  },
+  required: { color: COLORS.danger },
   optional: {
     fontFamily: FONT.regular,
     color:      COLORS.textMuted,
   },
   input: {
-    backgroundColor: COLORS.inputBg,
-    borderRadius:    RADIUS.md,
+    backgroundColor:   COLORS.inputBg,
+    borderRadius:      RADIUS.md,
     paddingHorizontal: SPACING.md,
     paddingVertical:   SPACING.sm + 2,
-    fontSize:        14,
-    fontFamily:      FONT.regular,
-    color:           COLORS.text,
-    borderWidth:     1,
-    borderColor:     "transparent",
+    fontSize:          14,
+    fontFamily:        FONT.regular,
+    color:             COLORS.text,
+    borderWidth:       1,
+    borderColor:       "transparent",
   },
   inputMultiline: {
     minHeight:  88,
     paddingTop: SPACING.sm + 2,
   },
   inputError: {
-    borderColor: COLORS.danger,
+    borderColor:     COLORS.danger,
     backgroundColor: "#FEF2F2",
   },
   errorText: {
@@ -396,27 +486,23 @@ const styles = StyleSheet.create({
     color:      COLORS.danger,
   },
 
-  // Submit button
+  // Submit
   btnSubmit: {
-    flexDirection:  "row",
-    alignItems:     "center",
-    justifyContent: "center",
-    gap:            8,
-    backgroundColor: "#0F766E",
-    borderRadius:   RADIUS.xl,
+    alignItems:      "center",
+    justifyContent:  "center",
+    backgroundColor: COLORS.primary,
+    borderRadius:    RADIUS.xl,
     paddingVertical: SPACING.md,
-    marginTop:      4,
+    marginTop:       4,
   },
-  btnDisabled: {
-    opacity: 0.6,
-  },
+  btnDisabled: { opacity: 0.6 },
   btnSubmitText: {
     fontSize:   15,
     fontFamily: FONT.bold,
     color:      "#fff",
   },
 
-  // Success screen
+  // Success
   successContainer: {
     flex:           1,
     alignItems:     "center",
@@ -428,7 +514,7 @@ const styles = StyleSheet.create({
     width:           96,
     height:          96,
     borderRadius:    48,
-    backgroundColor: "#CCFBF1",
+    backgroundColor: "#dbeafe",
     alignItems:      "center",
     justifyContent:  "center",
     marginBottom:    SPACING.sm,
@@ -446,23 +532,23 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   btnOutline: {
-    flexDirection:  "row",
-    alignItems:     "center",
-    gap:            6,
-    borderWidth:    1.5,
-    borderColor:    "#0F766E",
-    borderRadius:   RADIUS.xl,
-    paddingVertical:  SPACING.sm + 2,
+    flexDirection:     "row",
+    alignItems:        "center",
+    gap:               6,
+    borderWidth:       1.5,
+    borderColor:       COLORS.primary,
+    borderRadius:      RADIUS.xl,
+    paddingVertical:   SPACING.sm + 2,
     paddingHorizontal: SPACING.xl,
-    marginTop:      SPACING.md,
+    marginTop:         SPACING.md,
   },
   btnOutlineText: {
     fontSize:   14,
     fontFamily: FONT.semibold,
-    color:      "#0F766E",
+    color:      COLORS.primary,
   },
   btnBack: {
-    paddingVertical: SPACING.sm,
+    paddingVertical:   SPACING.sm,
     paddingHorizontal: SPACING.xl,
   },
   btnBackText: {

@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BookOpen, CalendarDays, Search, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, Copy, Printer, QrCode, Search, Users } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -58,6 +59,104 @@ function StatCard({ title, value, icon, color }: {
                 </div>
                 <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-sm ${color}`}>
                     {icon}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── QR Card ──────────────────────────────────────────────────────────────────
+
+function QrCard() {
+    const formUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/buku-tamu`
+        : '/buku-tamu';
+
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(formUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handlePrint = () => {
+        const win = window.open('', '_blank', 'width=480,height=640');
+        if (!win) return;
+        win.document.write(`
+            <!DOCTYPE html>
+            <html lang="id">
+            <head>
+                <meta charset="UTF-8" />
+                <title>QR Buku Tamu — SADESA</title>
+                <style>
+                    body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; background: #fff; }
+                    .wrap { text-align: center; padding: 40px; }
+                    .label { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #0f1a2b; }
+                    .sub { font-size: 13px; color: #666; margin-bottom: 24px; }
+                    .url { font-size: 11px; color: #888; margin-top: 20px; word-break: break-all; }
+                    @media print { body { -webkit-print-color-adjust: exact; } }
+                </style>
+            </head>
+            <body>
+                <div class="wrap">
+                    <div class="label">Buku Tamu Digital</div>
+                    <div class="sub">Scan QR untuk mengisi buku tamu kunjungan</div>
+                    <div id="qr"></div>
+                    <div class="url">${formUrl}</div>
+                </div>
+                <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"><\/script>
+                <script>
+                    QRCode.toCanvas(document.createElement('canvas'), '${formUrl}', { width: 256, margin: 2 }, function(err, canvas) {
+                        if (!err) {
+                            document.getElementById('qr').appendChild(canvas);
+                            setTimeout(() => window.print(), 400);
+                        }
+                    });
+                <\/script>
+            </body>
+            </html>
+        `);
+        win.document.close();
+    };
+
+    return (
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+            <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+                <div className="flex shrink-0 items-center justify-center rounded-2xl bg-white p-3 shadow-sm ring-1 ring-border">
+                    <QRCodeSVG value={formUrl} size={140} level="M" />
+                </div>
+                <div className="flex flex-1 flex-col gap-3">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <QrCode className="h-4 w-4 text-teal-600" />
+                            <span className="font-semibold text-foreground">QR Code Buku Tamu</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Print dan tempel di meja resepsionis. Pengunjung scan untuk mengisi form kunjungan.
+                        </p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground break-all font-mono">
+                        {formUrl}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={handlePrint}
+                            className="flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700"
+                        >
+                            <Printer className="h-4 w-4" />
+                            Print QR
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleCopy}
+                            className="flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted/50"
+                        >
+                            <Copy className="h-4 w-4" />
+                            {copied ? 'Tersalin!' : 'Salin Link'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -131,6 +230,9 @@ export default function AdminBukuTamu({ entries, filters, stats }: Props) {
                         color="bg-emerald-600 text-white"
                     />
                 </div>
+
+                {/* QR Code */}
+                <QrCard />
 
                 {/* Filter + Tabel */}
                 <div className="rounded-2xl border bg-card shadow-sm">
