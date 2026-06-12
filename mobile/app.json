@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "updates": {
-      "enabled": false
+      "enabled": false,
+      "url": "https://u.expo.dev/a1bc3e43-08aa-4387-aa1b-51477b87e738"
     },
     "ios": {
       "supportsTablet": true
@@ -24,7 +25,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.kurtubisorganization.sadesamobile"
+      "package": "com.kurtubisorganization.sadesamobile",
+      "newArchEnabled": false
     },
     "web": {
       "output": "static",
@@ -55,9 +57,12 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "6b4efda2-4f2b-478d-8dc6-2d03e3d16911"
+        "projectId": "ca0e3508-c5df-4feb-bf17-d515ddecb03e"
       }
     },
-    "owner": "kurtubis-organization"
+    "owner": "kurtubis-organization",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }

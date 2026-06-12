@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\MasterSurat;
 use App\Models\PengajuanSurat;
+use App\Models\User;
 use App\Models\VerifikasiBerkas;
 use App\Notifications\StatusSuratNotification;
 use App\Services\SuratService;
@@ -192,5 +194,60 @@ class StaffPengajuanController extends Controller
         $pengajuan->loadMissing(['masterSurat', 'suratOutput']);
 
         return $this->suratService->streamPdf($pengajuan);
+    }
+
+    // ─── Pelayanan Loket (walk-in offline) ────────────────────────────────────
+
+    public function loket(): InertiaResponse
+    {
+        $masterSurat = MasterSurat::where('is_active', true)
+            ->select('id', 'kode', 'nama_surat', 'persyaratan')
+            ->orderBy('nama_surat')
+            ->get();
+
+        return Inertia::render('staff/loket', [
+            'masterSurat' => $masterSurat,
+        ]);
+    }
+
+    public function cariNik(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $request->validate(['nik' => 'required|digits:16']);
+
+        $warga = User::where('nik', $request->nik)
+            ->where('role', 'warga')
+            ->select('id', 'name', 'nik', 'email', 'phone')
+            ->first();
+
+        if (! $warga) {
+            return response()->json(['message' => 'NIK tidak ditemukan dalam database kependudukan.'], 404);
+        }
+
+        return response()->json(['data' => $warga]);
+    }
+
+    public function loketStore(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'nik'            => 'required|digits:16|exists:users,nik',
+            'master_surat_id'=> 'required|exists:master_surat,id',
+            'keperluan'      => 'nullable|string|max:1000',
+        ]);
+
+        $warga = User::where('nik', $data['nik'])->where('role', 'warga')->firstOrFail();
+
+        $pengajuan = PengajuanSurat::create([
+            'no_pengajuan'    => PengajuanSurat::generateNoPengajuan(),
+            'user_id'         => $warga->id,
+            'master_surat_id' => $data['master_surat_id'],
+            'data_formulir'   => $data['keperluan'] ? ['keperluan' => $data['keperluan']] : null,
+            'status'          => 'diproses',
+            'catatan'         => 'Diajukan via loket oleh staf: ' . $request->user()->name,
+        ]);
+
+        AuditLog::catat('loket_pengajuan_dibuat', 'PengajuanSurat', $pengajuan->id);
+
+        return redirect()->route('staff.pengajuan.show', $pengajuan)
+            ->with('success', "Pengajuan {$pengajuan->no_pengajuan} berhasil dibuat atas nama {$warga->name}.");
     }
 }

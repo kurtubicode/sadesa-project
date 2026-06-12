@@ -1,0 +1,122 @@
+<!doctype html>
+<!-- @dsCard group="UI Kit — Dashboard" name="Dashboard UI Kit" subtitle="Admin / Staff / Kepala Desa — role-switchable dashboard" viewport="1440x820" -->
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SADESA — Dashboard UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  #root { font-family: var(--font-sans); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 999px; border: 2px solid #fff; }
+  /* demo role switcher */
+  .roleswitch { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 60;
+    background: var(--gray-900); border-radius: 999px; padding: 5px; display: flex; gap: 3px; box-shadow: var(--shadow-lg); }
+  .roleswitch button { font-family: var(--font-sans); font-size: 13px; font-weight: 600; border: none; cursor: pointer;
+    padding: 8px 18px; border-radius: 999px; background: transparent; color: rgba(255,255,255,.65); transition: all .15s; }
+  .roleswitch button.on { background: var(--teal-500); color: #fff; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="parts.jsx"></script>
+<script type="text/babel" src="parts2.jsx"></script>
+<script type="text/babel" src="Shell.jsx"></script>
+<script type="text/babel" src="screens-admin-staff.jsx"></script>
+<script type="text/babel" src="screens-kades.jsx"></script>
+<script type="text/babel" src="pages-data.jsx"></script>
+<script type="text/babel" src="pages-ops.jsx"></script>
+<script type="text/babel" src="pages-content.jsx"></script>
+<script type="text/babel" src="pages-staff.jsx"></script>
+<script type="text/babel" src="pages-staff2.jsx"></script>
+<script type="text/babel" src="pages-kades.jsx"></script>
+
+<script type="text/babel">
+  const { useState } = React;
+
+  const ADMIN_PAGES = {
+    dashboard: AdminDashboard,
+    penduduk:  PendudukPage,
+    pengguna:  PenggunaPage,
+    wilayah:   WilayahPage,
+    surat:     SuratBuilderPage,
+    kategori:  KategoriPage,
+    berita:    BeritaPage,
+    broadcast: BroadcastPage,
+    antrean:   AntreanPage,
+    kunjungan: KunjunganPage,
+    audit:     AuditPage,
+  };
+
+  const STAFF_PAGES = {
+    antrean:    AntreanPage,
+    loket:      PelayananLoket,
+    cetak:      SuratCetak,
+    bukutamu:   BukuTamuPage,
+  };
+
+  const KADES_PAGES = {
+    dashboard:  KadesDashboard,
+    pengesahan: PengesahanDokumen,
+    laporan:    LaporanBulanan,
+  };
+
+  function App() {
+    const [role, setRole] = useState('admin');
+    const [active, setActive] = useState('Dashboard'); // sidebar label
+    const [page, setPage] = useState('dashboard');      // admin page key
+    const [screen, setScreen] = useState('dashboard');  // staff/kades detail screen
+    const [selected, setSelected] = useState(null);
+
+    function switchRole(r) { setRole(r); setActive('Dashboard'); setPage('dashboard'); setScreen('dashboard'); setSelected(null); }
+    function navigate(it) {
+      setActive(it.label);
+      setSelected(null);
+      if (role === 'admin') setPage(it.page);
+      else if (role === 'staff') setScreen(it.page);
+      else setPage(it.page);
+    }
+
+    let content;
+    if (role === 'admin') {
+      const Page = ADMIN_PAGES[page] || AdminDashboard;
+      content = <Page />;
+    } else if (role === 'staff') {
+      if (screen === 'verifikasi') content = <VerifikasiBerkas onBack={() => { setScreen('dashboard'); setActive('Dashboard'); }} />;
+      else if (screen === 'pengaduan') content = <PengaduanDetail onBack={() => { setScreen('dashboard'); setActive('Dashboard'); }} />;
+      else if (STAFF_PAGES[screen]) { const P = STAFF_PAGES[screen]; content = <P />; }
+      else content = <StaffDashboard
+        onVerifikasi={() => { setScreen('verifikasi'); }}
+        onDetail={() => { setScreen('verifikasi'); }} />;
+    } else {
+      const Page = KADES_PAGES[page] || KadesDashboard;
+      content = <Page />;
+    }
+
+    return (
+      <React.Fragment>
+        <Shell role={role} active={active} onNavigate={navigate} key={role + page + screen}>{content}</Shell>
+        <div className="roleswitch">
+          {[['admin', 'Admin'], ['staff', 'Staff'], ['kades', 'Kepala Desa']].map(([k, l]) => (
+            <button key={k} className={role === k ? 'on' : ''} onClick={() => switchRole(k)}>{l}</button>
+          ))}
+        </div>
+      </React.Fragment>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

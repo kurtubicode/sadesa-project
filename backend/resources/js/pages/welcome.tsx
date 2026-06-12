@@ -13,6 +13,9 @@ import {
     Menu,
     Phone,
     Shield,
+    ShieldCheck,
+    FileCheck,
+    MessageSquare,
     Users,
     X,
     Youtube,
@@ -51,6 +54,7 @@ function Navbar({ user, canRegister }: { user: PageProps['auth']['user']; canReg
         { href: '#tentang', label: 'Tentang' },
         { href: '#fitur', label: 'Layanan' },
         { href: '#transparansi', label: 'Transparansi' },
+        { href: '#statistik', label: 'Statistik' },
         { href: '#berita', label: 'Berita' },
         { href: '#kontak', label: 'Kontak' },
     ];
@@ -67,8 +71,8 @@ function Navbar({ user, canRegister }: { user: PageProps['auth']['user']; canReg
                         </svg>
                     </div>
                     <div>
-                        <span className={`text-lg font-bold leading-none ${scrolled ? 'text-gray-900 dark:text-white' : 'text-white'}`}>SADESA</span>
-                        <p className={`text-xs leading-none ${scrolled ? 'text-gray-500 dark:text-gray-400' : 'text-teal-100'}`}>Desa Cirangkong</p>
+                        <span className={`text-lg font-bold leading-none ${scrolled ? 'text-foreground' : 'text-white'}`}>SADESA</span>
+                        <p className={`text-xs leading-none ${scrolled ? 'text-muted-foreground' : 'text-teal-100'}`}>Desa Cirangkong</p>
                     </div>
                 </a>
 
@@ -232,17 +236,17 @@ function Tentang() {
     ];
 
     return (
-        <section id="tentang" className="bg-white py-24 dark:bg-gray-900">
+        <section id="tentang" className="bg-background py-24">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="grid items-center gap-16 lg:grid-cols-2">
                     <div>
                         <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
                             Tentang SADESA
                         </div>
-                        <h2 className="mb-6 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                        <h2 className="mb-6 text-3xl font-bold text-foreground sm:text-4xl">
                             Platform Digital untuk Desa yang Lebih Baik
                         </h2>
-                        <p className="mb-6 text-base leading-relaxed text-gray-600 dark:text-gray-400">
+                        <p className="mb-6 text-base leading-relaxed text-muted-foreground">
                             SADESA — Sahabat Digital Desa, adalah platform digital yang dirancang khusus untuk memudahkan pengelolaan administrasi Desa Cirangkong. Mengintegrasikan berbagai layanan desa dalam satu platform yang mudah diakses, transparan, dan efisien.
                         </p>
                         <div className="space-y-3">
@@ -261,12 +265,12 @@ function Tentang() {
 
                     <div className="grid grid-cols-2 gap-4">
                         {keunggulan.map((k, i) => (
-                            <div key={i} className="rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                            <div key={i} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
                                 <div className={`mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl ${k.color}`}>
                                     <k.icon className="h-5 w-5" />
                                 </div>
-                                <h3 className="mb-1.5 text-sm font-bold text-gray-900 dark:text-white">{k.title}</h3>
-                                <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">{k.desc}</p>
+                                <h3 className="mb-1.5 text-sm font-bold text-foreground">{k.title}</h3>
+                                <p className="text-xs leading-relaxed text-muted-foreground">{k.desc}</p>
                             </div>
                         ))}
                     </div>
@@ -287,28 +291,28 @@ function Fitur() {
     ];
 
     return (
-        <section id="fitur" className="bg-gray-50 py-24 dark:bg-gray-800">
+        <section id="fitur" className="bg-muted py-24">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="mb-14 text-center">
                     <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
                         Fitur & Layanan
                     </div>
-                    <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                    <h2 className="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
                         Semua Kebutuhan Desa dalam Satu Platform
                     </h2>
-                    <p className="mx-auto max-w-2xl text-base text-gray-600 dark:text-gray-400">
+                    <p className="mx-auto max-w-2xl text-base text-muted-foreground">
                         Berbagai fitur yang memudahkan administrasi dan pelayanan desa untuk seluruh warga Cirangkong
                     </p>
                 </div>
 
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     {fitur.map((f, i) => (
-                        <div key={i} className="group rounded-2xl border bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                        <div key={i} className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                             <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${f.color} shadow-md`}>
                                 <f.icon className="h-6 w-6 text-white" />
                             </div>
-                            <h3 className="mb-3 text-base font-bold text-gray-900 dark:text-white">{f.title}</h3>
-                            <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{f.desc}</p>
+                            <h3 className="mb-3 text-base font-bold text-foreground">{f.title}</h3>
+                            <p className="text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -339,13 +343,13 @@ function ProfilDesa() {
     ];
 
     return (
-        <section className="bg-white py-24 dark:bg-gray-900">
+        <section className="bg-background py-24">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="mb-14 text-center">
                     <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
                         Profil Desa
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                    <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
                         Profil Desa Cirangkong
                     </h2>
                 </div>
@@ -353,7 +357,7 @@ function ProfilDesa() {
                 <div className="grid gap-10 lg:grid-cols-2">
                     {/* Visi Misi */}
                     <div className="space-y-6">
-                        <p className="text-base leading-relaxed text-gray-600 dark:text-gray-400">
+                        <p className="text-base leading-relaxed text-muted-foreground">
                             Desa Cirangkong merupakan salah satu desa yang berada di wilayah Kabupaten Bandung, Jawa Barat. Dengan komitmen untuk terus berkembang, kami menghadirkan sistem digital untuk meningkatkan kualitas pelayanan kepada masyarakat.
                         </p>
 
@@ -365,10 +369,10 @@ function ProfilDesa() {
                         </div>
 
                         <div>
-                            <h3 className="mb-3 font-bold text-gray-900 dark:text-white">Misi</h3>
+                            <h3 className="mb-3 font-bold text-foreground">Misi</h3>
                             <ol className="space-y-2">
                                 {misi.map((m, i) => (
-                                    <li key={i} className="flex gap-3 text-sm text-gray-600 dark:text-gray-400">
+                                    <li key={i} className="flex gap-3 text-sm text-muted-foreground">
                                         <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-bold text-teal-700 dark:bg-teal-900/50 dark:text-teal-300">{i + 1}</span>
                                         {m}
                                     </li>
@@ -379,13 +383,13 @@ function ProfilDesa() {
 
                     {/* Struktur */}
                     <div>
-                        <h3 className="mb-4 font-bold text-gray-900 dark:text-white">Struktur Organisasi</h3>
+                        <h3 className="mb-4 font-bold text-foreground">Struktur Organisasi</h3>
                         <div className="space-y-2">
                             {struktur.map((s, i) => (
-                                <div key={i} className={`flex items-center justify-between rounded-xl p-3.5 ${i === 0 ? 'bg-teal-600 text-white' : 'border bg-gray-50 dark:border-gray-700 dark:bg-gray-800'}`}>
+                                <div key={i} className={`flex items-center justify-between rounded-xl p-3.5 ${i === 0 ? 'bg-teal-600 text-white' : 'border border-border bg-muted/50'}`}>
                                     <div>
-                                        <p className={`text-sm font-semibold ${i === 0 ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{s.jabatan}</p>
-                                        <p className={`text-xs ${i === 0 ? 'text-teal-100' : 'text-gray-500 dark:text-gray-400'}`}>{s.nama}</p>
+                                        <p className={`text-sm font-semibold ${i === 0 ? 'text-white' : 'text-foreground'}`}>{s.jabatan}</p>
+                                        <p className={`text-xs ${i === 0 ? 'text-teal-100' : 'text-muted-foreground'}`}>{s.nama}</p>
                                     </div>
                                     {i === 0 && (
                                         <div className="rounded-full bg-white/20 px-2 py-0.5 text-xs text-white">Pimpinan</div>
@@ -423,37 +427,37 @@ function Transparansi() {
     ];
 
     return (
-        <section id="transparansi" className="bg-gray-50 py-24 dark:bg-gray-800">
+        <section id="transparansi" className="bg-muted py-24">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="mb-14 text-center">
                     <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
                         Transparansi
                     </div>
-                    <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                    <h2 className="mb-4 text-3xl font-bold text-foreground sm:text-4xl">
                         Transparansi Anggaran & Program
                     </h2>
-                    <p className="text-base text-gray-600 dark:text-gray-400">Keterbukaan informasi untuk akuntabilitas yang lebih baik</p>
+                    <p className="text-base text-muted-foreground">Keterbukaan informasi untuk akuntabilitas yang lebih baik</p>
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-3">
                     {/* APBDes */}
                     <div className="lg:col-span-2 space-y-6">
-                        <div className="rounded-2xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
                             <div className="mb-4 flex items-center justify-between">
-                                <h3 className="font-bold text-gray-900 dark:text-white">APBDes Tahun 2025</h3>
+                                <h3 className="font-bold text-foreground">APBDes Tahun 2025</h3>
                                 <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
                                     Total: Rp 1,245 M
                                 </span>
                             </div>
 
                             <div className="mb-5">
-                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Pendapatan</p>
+                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pendapatan</p>
                                 <div className="space-y-2">
                                     {pendapatan.map((p, i) => (
                                         <div key={i}>
                                             <div className="mb-1 flex justify-between text-xs">
-                                                <span className="text-gray-600 dark:text-gray-400">{p.label}</span>
-                                                <span className="font-medium text-gray-900 dark:text-white">{formatRupiah(p.value)}</span>
+                                                <span className="text-muted-foreground">{p.label}</span>
+                                                <span className="font-medium text-foreground">{formatRupiah(p.value)}</span>
                                             </div>
                                             <div className="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                                                 <div className="h-full rounded-full bg-teal-500 transition-all"
@@ -465,13 +469,13 @@ function Transparansi() {
                             </div>
 
                             <div>
-                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Belanja</p>
+                                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Belanja</p>
                                 <div className="space-y-2">
                                     {belanja.map((b, i) => (
                                         <div key={i}>
                                             <div className="mb-1 flex justify-between text-xs">
-                                                <span className="text-gray-600 dark:text-gray-400">{b.label}</span>
-                                                <span className="font-medium text-gray-900 dark:text-white">{formatRupiah(b.value)}</span>
+                                                <span className="text-muted-foreground">{b.label}</span>
+                                                <span className="font-medium text-foreground">{formatRupiah(b.value)}</span>
                                             </div>
                                             <div className="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                                                 <div className="h-full rounded-full bg-blue-500 transition-all"
@@ -486,13 +490,13 @@ function Transparansi() {
 
                     {/* Program Prioritas */}
                     <div>
-                        <div className="rounded-2xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                            <h3 className="mb-4 font-bold text-gray-900 dark:text-white">Program Prioritas 2025</h3>
+                        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+                            <h3 className="mb-4 font-bold text-foreground">Program Prioritas 2025</h3>
                             <div className="space-y-5">
                                 {program.map((p, i) => (
                                     <div key={i}>
                                         <div className="mb-1.5 flex items-start justify-between gap-2">
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{p.judul}</p>
+                                            <p className="text-sm font-semibold text-foreground">{p.judul}</p>
                                             <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400">
                                                 {p.status}
                                             </span>
@@ -501,7 +505,7 @@ function Transparansi() {
                                             <div className={`h-full rounded-full ${p.color} transition-all`}
                                                 style={{ width: `${p.progress}%` }} />
                                         </div>
-                                        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                        <div className="flex justify-between text-xs text-muted-foreground">
                                             <span>{p.progress}% selesai</span>
                                             <span>{formatRupiah(p.anggaran)}</span>
                                         </div>
@@ -516,56 +520,189 @@ function Transparansi() {
     );
 }
 
-// ─── Berita ───────────────────────────────────────────────────────────────────
+// ─── Statistik ────────────────────────────────────────────────────────────────
 
-function Berita() {
-    const berita = [
-        { judul: 'Peluncuran SADESA — Sahabat Digital Desa Cirangkong', tanggal: '15 Mei 2025', kategori: 'Pengumuman', kategoriColor: 'bg-blue-100 text-blue-700', ringkasan: 'Desa Cirangkong resmi meluncurkan platform digital SADESA untuk meningkatkan kualitas pelayanan kepada masyarakat.' },
-        { judul: 'Musyawarah Desa Pembahasan APBDes 2025', tanggal: '8 Mei 2025', kategori: 'Kegiatan', kategoriColor: 'bg-teal-100 text-teal-700', ringkasan: 'Pemerintah Desa Cirangkong mengadakan Musyawarah Desa untuk membahas Rancangan APBDes tahun 2025.' },
-        { judul: 'Program Vaksinasi Massal untuk Warga Desa', tanggal: '2 Mei 2025', kategori: 'Kesehatan', kategoriColor: 'bg-green-100 text-green-700', ringkasan: 'Pemerintah Desa bekerja sama dengan Puskesmas mengadakan program vaksinasi gratis untuk seluruh warga.' },
-        { judul: 'Pelatihan UMKM Digital bagi Pelaku Usaha Lokal', tanggal: '28 April 2025', kategori: 'Pemberdayaan', kategoriColor: 'bg-orange-100 text-orange-700', ringkasan: 'Desa Cirangkong mengadakan pelatihan pemasaran digital dan e-commerce bagi pelaku UMKM lokal.' },
+function Statistik() {
+    // Data dummy untuk simulasi statistik desa sesuai desain dashboard
+    const stats = [
+        { label: 'Total Penduduk', value: '3,842', trend: '+2.4%', icon: Users },
+        { label: 'Warga Terverifikasi', value: '2,150', trend: '+12%', icon: ShieldCheck },
+        { label: 'Pengajuan Selesai', value: '450', trend: '+5.7%', icon: FileCheck },
+        { label: 'Laporan Warga', value: '12', trend: '-2', icon: MessageSquare },
+    ];
+
+    const activities = [
+        { user: 'Budi Santoso', action: 'Mengajukan Surat Domisili', time: '2 jam yang lalu' },
+        { user: 'Siti Aminah', action: 'Melaporkan Lampu Jalan Mati', time: '5 jam yang lalu' },
+        { user: 'Admin Desa', action: 'Update APBDes 2025', time: 'Kemarin' },
     ];
 
     return (
-        <section id="berita" className="bg-white py-24 dark:bg-gray-900">
+        <section id="statistik" className="bg-background py-24">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="mb-14 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+                    <div>
+                        <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+                            Data & Statistik
+                        </div>
+                        <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
+                            Monitoring Layanan Desa
+                        </h2>
+                    </div>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-12">
+                    {/* Stat Cards (Right side/Top in mobile) */}
+                    <div className="grid gap-4 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
+                        {stats.map((s, i) => (
+                            <div key={i} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400">
+                                    <s.icon className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <p className="text-xl font-bold text-foreground">{s.value}</p>
+                                        <span className={`text-[10px] font-bold ${s.trend.startsWith('+') ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                            {s.trend}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Chart Area (Main/Left side) */}
+                    <div className="lg:col-span-8">
+                        <div className="flex h-full flex-col rounded-3xl border border-border bg-card p-8 shadow-sm">
+                            <div className="mb-8 flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-bold text-foreground">Aktivitas Pelayanan</h3>
+                                    <p className="text-xs text-muted-foreground">Statistik pengajuan surat 6 bulan terakhir</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
+                                        <span className="h-2 w-2 rounded-full bg-teal-500"></span> Pengajuan
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
+                                        <span className="h-2 w-2 rounded-full bg-blue-500"></span> Selesai
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Simulated Chart with SVG */}
+                            <div className="relative mt-auto flex-1 min-h-[250px]">
+                                <svg className="h-full w-full overflow-visible" preserveAspectRatio="none">
+                                    {/* Grid lines */}
+                                    {[0, 1, 2, 3, 4].map((i) => (
+                                        <line key={i} x1="0" y1={`${i * 25}%`} x2="100%" y2={`${i * 25}%`} className="stroke-border" strokeDasharray="4 4" />
+                                    ))}
+                                    {/* Line Graph 1 */}
+                                    <path 
+                                        d="M 0 180 Q 150 150 300 190 T 600 100 T 900 130 T 1200 80" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="3" 
+                                        className="text-teal-500" 
+                                        vectorEffect="non-scaling-stroke"
+                                    />
+                                    {/* Line Graph 2 */}
+                                    <path 
+                                        d="M 0 220 Q 150 200 300 230 T 600 160 T 900 180 T 1200 140" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="3" 
+                                        className="text-blue-500 opacity-60" 
+                                        vectorEffect="non-scaling-stroke"
+                                    />
+                                </svg>
+                                <div className="mt-4 flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                    <span>Jan</span>
+                                    <span>Feb</span>
+                                    <span>Mar</span>
+                                    <span>Apr</span>
+                                    <span>Mei</span>
+                                    <span>Jun</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recent Activity (Full width bottom or separate column) */}
+                    <div className="lg:col-span-12">
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                            <h3 className="mb-5 text-sm font-bold text-foreground">Aktivitas Terakhir</h3>
+                            <div className="space-y-4">
+                                {activities.map((a, i) => (
+                                    <div key={i} className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/30 p-3 transition hover:bg-muted/50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                                                {a.user.substring(0, 2)}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-foreground leading-none">{a.user}</p>
+                                                <p className="mt-1 text-[10px] text-muted-foreground">{a.action}</p>
+                                            </div>
+                                        </div>
+                                        <span className="text-[10px] font-medium text-muted-foreground italic">{a.time}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// ─── Berita ───────────────────────────────────────────────────────────────────
+
+function Berita({ berita = [] }: { berita?: any[] }) {
+    return (
+        <section id="berita" className="bg-background py-24">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="mb-14 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
                     <div>
                         <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
                             Berita & Pengumuman
                         </div>
-                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                        <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
                             Berita & Pengumuman Terbaru
                         </h2>
                     </div>
-                    <a href="#" className="flex items-center gap-1.5 text-sm font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
+                    <Link href="/informasi" className="flex items-center gap-1.5 text-sm font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
                         Lihat Semua <ChevronRight className="h-4 w-4" />
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    {berita.map((b, i) => (
-                        <article key={i} className="group flex flex-col rounded-2xl border bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+                    {berita.length > 0 ? berita.map((b, i) => (
+                        <article key={i} className="group flex flex-col rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-md">
                             <div className="h-36 rounded-t-2xl bg-gradient-to-br from-teal-600 to-emerald-700" />
                             <div className="flex flex-1 flex-col p-5">
                                 <div className="mb-3 flex items-center gap-2">
-                                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${b.kategoriColor} dark:bg-opacity-20`}>
-                                        {b.kategori}
+                                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${b.tipe === 'pengumuman' ? 'bg-blue-100 text-blue-700' : 'bg-teal-100 text-teal-700'} dark:bg-opacity-20 uppercase`}>
+                                        {b.tipe}
                                     </span>
-                                    <span className="text-xs text-gray-400">{b.tanggal}</span>
+                                    <span className="text-xs text-gray-400">
+                                        {new Date(b.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </span>
                                 </div>
-                                <h3 className="mb-2 flex-1 text-sm font-bold leading-snug text-gray-900 group-hover:text-teal-600 dark:text-white dark:group-hover:text-teal-400">
+                                <h3 className="mb-2 flex-1 text-sm font-bold leading-snug text-gray-900 group-hover:text-teal-600 dark:text-white dark:group-hover:text-teal-400 line-clamp-2">
                                     {b.judul}
                                 </h3>
-                                <p className="mb-4 text-xs leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-2">
-                                    {b.ringkasan}
-                                </p>
-                                <a href="#" className="flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
+                                <p className="mb-4 text-xs leading-relaxed text-muted-foreground line-clamp-2" dangerouslySetInnerHTML={{ __html: b.konten.substring(0, 100) + '...' }} />
+                                <Link href={`/informasi/${b.slug}`} className="flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400">
                                     Baca selengkapnya <ChevronRight className="h-3.5 w-3.5" />
-                                </a>
+                                </Link>
                             </div>
                         </article>
-                    ))}
+                    )) : (
+                        <div className="col-span-full py-12 text-center text-gray-500">
+                            Belum ada berita terbaru.
+                        </div>
+                    )}
                 </div>
             </div>
         </section>
@@ -576,22 +713,31 @@ function Berita() {
 
 function Kontak() {
     return (
-        <section id="kontak" className="bg-gray-50 py-24 dark:bg-gray-800">
+        <section id="kontak" className="bg-muted py-24">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="mb-14 text-center">
                     <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
                         Kontak
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">Hubungi Kami</h2>
+                    <h2 className="text-3xl font-bold text-foreground sm:text-4xl">Hubungi Kami</h2>
                 </div>
 
                 <div className="grid gap-8 lg:grid-cols-3">
                     {/* Info kontak */}
                     <div className="space-y-5">
                         {[
-                            { icon: MapPin, title: 'Alamat', lines: ['Kantor Desa Cirangkong', 'Jl. Raya Cirangkong No. 123', 'Kabupaten Bandung, Jawa Barat'] },
-                            { icon: Phone, title: 'Telepon', lines: ['(022) xxxx-xxxx'] },
-                            { icon: Mail, title: 'Email', lines: ['desacirangkong@example.com'] },
+                            { 
+                                icon: MapPin, 
+                                title: 'Alamat', 
+                                lines: [
+                                    'Pemerintah Desa Cirangkong', 
+                                    'Jl. Lempar - Cirangkong KM. 08', 
+                                    'Desa Cirangkong Kecamatan Cijambe',
+                                    'Kabupaten Subang, 41286'
+                                ] 
+                            },
+                            { icon: Phone, title: 'Telepon', lines: ['(0260) xxxx-xxxx'] },
+                            { icon: Mail, title: 'Email', lines: ['desacirangkong@subang.go.id'] },
                             { icon: Clock, title: 'Jam Pelayanan', lines: ['Senin – Kamis: 08.00 – 15.00 WIB', 'Jumat: 08.00 – 11.30 WIB', 'Sabtu – Minggu: Libur'] },
                         ].map((c, i) => (
                             <div key={i} className="flex gap-4">
@@ -617,7 +763,7 @@ function Kontak() {
                                     { Icon: Youtube, href: '#', label: 'YouTube' },
                                 ].map(({ Icon, href, label }) => (
                                     <a key={label} href={href}
-                                        className="flex h-9 w-9 items-center justify-center rounded-xl border bg-white text-gray-500 transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-600 dark:border-gray-600 dark:bg-gray-700 dark:hover:border-teal-500 dark:hover:bg-teal-900/30 dark:hover:text-teal-400">
+                                        className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-600 dark:hover:border-teal-500 dark:hover:bg-teal-900/30 dark:hover:text-teal-400">
                                         <Icon className="h-4 w-4" />
                                     </a>
                                 ))}
@@ -625,14 +771,19 @@ function Kontak() {
                         </div>
                     </div>
 
-                    {/* Map placeholder */}
+                    {/* Map */}
                     <div className="lg:col-span-2">
-                        <div className="flex h-full min-h-64 items-center justify-center rounded-2xl border bg-gradient-to-br from-teal-50 to-emerald-50 dark:border-gray-700 dark:from-teal-900/10 dark:to-emerald-900/10">
-                            <div className="text-center">
-                                <MapPin className="mx-auto mb-3 h-12 w-12 text-teal-300 dark:text-teal-700" />
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Peta Lokasi</p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500">Kantor Desa Cirangkong</p>
-                            </div>
+                        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm h-full min-h-[400px]">
+                            <iframe 
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31718.42340576395!2d107.7262447!3d-6.4251765!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6923c6f05a9b73%3A0xc669f6f6f9c9a66a!2sDesa%20Cirangkong!5e0!3m2!1sid!2sid!4v1717000000000!5m2!1sid!2sid" 
+                                width="100%" 
+                                height="100%" 
+                                style={{ border: 0 }} 
+                                allowFullScreen={true} 
+                                loading="lazy" 
+                                referrerPolicy="no-referrer-when-downgrade"
+                                className="invert-[0.05] grayscale-[0.2] dark:invert-[0.9] dark:hue-rotate-180"
+                            ></iframe>
                         </div>
                     </div>
                 </div>
@@ -668,8 +819,8 @@ function Footer({ canRegister }: { canRegister: boolean }) {
                     <div>
                         <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-gray-500">Navigasi</p>
                         <ul className="space-y-2">
-                            {['Beranda', 'Profil Desa', 'Layanan', 'Berita', 'Transparansi', 'Kontak'].map(l => (
-                                <li key={l}><a href="#" className="text-sm text-gray-400 transition hover:text-teal-400">{l}</a></li>
+                            {['Beranda', 'Tentang', 'Layanan', 'Berita', 'Transparansi', 'Kontak'].map(l => (
+                                <li key={l}><a href={`#${l.toLowerCase()}`} className="text-sm text-gray-400 transition hover:text-teal-400">{l}</a></li>
                             ))}
                         </ul>
                     </div>
@@ -706,10 +857,10 @@ function Footer({ canRegister }: { canRegister: boolean }) {
 
                 <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                     <p className="text-xs text-gray-500">
-                        © {new Date().getFullYear()} Desa Cirangkong. SADESA — Sahabat Digital Desa. All Rights Reserved.
+                        © {new Date().getFullYear()} Pemerintah Desa Cirangkong. SADESA — Sahabat Digital Desa.
                     </p>
                     <p className="text-xs text-gray-600">
-                        Developed with ❤️ for Desa Cirangkong
+                        Kecamatan Cijambe, Kabupaten Subang
                     </p>
                 </div>
             </div>
@@ -719,7 +870,7 @@ function Footer({ canRegister }: { canRegister: boolean }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function Welcome({ canRegister = true }: { canRegister?: boolean }) {
+export default function Welcome({ canRegister = true, berita = [] }: { canRegister?: boolean; berita?: any[] }) {
     const { auth } = usePage<PageProps>().props;
     const user = auth?.user ?? null;
 
@@ -733,7 +884,8 @@ export default function Welcome({ canRegister = true }: { canRegister?: boolean 
                 <Fitur />
                 <ProfilDesa />
                 <Transparansi />
-                <Berita />
+                <Statistik />
+                <Berita berita={berita} />
                 <Kontak />
                 <Footer canRegister={canRegister} />
             </div>

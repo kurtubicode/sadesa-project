@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { BookOpen, CalendarDays, Copy, Printer, QrCode, Search, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, Download, QrCode, Search, Users, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import AppLayout from '@/layouts/app-layout';
@@ -65,98 +65,102 @@ function StatCard({ title, value, icon, color }: {
     );
 }
 
-// ─── QR Card ──────────────────────────────────────────────────────────────────
+// ─── QR Modal ─────────────────────────────────────────────────────────────────
 
-function QrCard() {
-    const formUrl = typeof window !== 'undefined'
+function QRModal({ onClose }: { onClose: () => void }) {
+    const svgRef = useRef<SVGSVGElement>(null);
+    const qrUrl  = typeof window !== 'undefined'
         ? `${window.location.origin}/buku-tamu`
         : '/buku-tamu';
 
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(formUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const handleDownload = () => {
+        const svg = svgRef.current;
+        if (!svg) return;
+        const serialized = new XMLSerializer().serializeToString(svg);
+        const blob = new Blob([serialized], { type: 'image/svg+xml' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'qr-buku-tamu.svg';
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     const handlePrint = () => {
-        const win = window.open('', '_blank', 'width=480,height=640');
+        const svg = svgRef.current;
+        if (!svg) return;
+        const serialized = new XMLSerializer().serializeToString(svg);
+        const win = window.open('', '_blank');
         if (!win) return;
         win.document.write(`
-            <!DOCTYPE html>
-            <html lang="id">
-            <head>
-                <meta charset="UTF-8" />
-                <title>QR Buku Tamu — SADESA</title>
-                <style>
-                    body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; background: #fff; }
-                    .wrap { text-align: center; padding: 40px; }
-                    .label { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #0f1a2b; }
-                    .sub { font-size: 13px; color: #666; margin-bottom: 24px; }
-                    .url { font-size: 11px; color: #888; margin-top: 20px; word-break: break-all; }
-                    @media print { body { -webkit-print-color-adjust: exact; } }
-                </style>
-            </head>
+            <html><head><title>QR Buku Tamu</title>
+            <style>
+                body { display:flex; flex-direction:column; align-items:center;
+                       justify-content:center; min-height:100vh; font-family:sans-serif; gap:16px; }
+                p { font-size:13px; color:#555; margin:0; }
+                h2 { font-size:20px; font-weight:700; margin:0; }
+                .url { font-size:10px; color:#999; word-break:break-all; max-width:280px; text-align:center; }
+                @media print { body { -webkit-print-color-adjust: exact; } }
+            </style></head>
             <body>
-                <div class="wrap">
-                    <div class="label">Buku Tamu Digital</div>
-                    <div class="sub">Scan QR untuk mengisi buku tamu kunjungan</div>
-                    <div id="qr"></div>
-                    <div class="url">${formUrl}</div>
-                </div>
-                <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"><\/script>
-                <script>
-                    QRCode.toCanvas(document.createElement('canvas'), '${formUrl}', { width: 256, margin: 2 }, function(err, canvas) {
-                        if (!err) {
-                            document.getElementById('qr').appendChild(canvas);
-                            setTimeout(() => window.print(), 400);
-                        }
-                    });
-                <\/script>
-            </body>
-            </html>
+                <h2>Buku Tamu Digital</h2>
+                <p>Kantor Desa Cirangkong</p>
+                ${serialized}
+                <p>Scan untuk mengisi data kunjungan</p>
+                <span class="url">${qrUrl}</span>
+            </body></html>
         `);
         win.document.close();
+        win.print();
     };
 
     return (
-        <div className="rounded-2xl border bg-card p-6 shadow-sm">
-            <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-                <div className="flex shrink-0 items-center justify-center rounded-2xl bg-white p-3 shadow-sm ring-1 ring-border">
-                    <QRCodeSVG value={formUrl} size={140} level="M" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+            <div
+                className="relative w-full max-w-sm rounded-3xl bg-card p-6 shadow-2xl"
+                onClick={e => e.stopPropagation()}
+            >
+                <button
+                    onClick={onClose}
+                    className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-muted hover:bg-muted/80"
+                >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+
+                <div className="mb-4 text-center">
+                    <h2 className="text-lg font-bold text-foreground">QR Buku Tamu</h2>
+                    <p className="text-sm text-muted-foreground">Tempel di meja loket atau pintu masuk</p>
                 </div>
-                <div className="flex flex-1 flex-col gap-3">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <QrCode className="h-4 w-4 text-teal-600" />
-                            <span className="font-semibold text-foreground">QR Code Buku Tamu</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                            Print dan tempel di meja resepsionis. Pengunjung scan untuk mengisi form kunjungan.
-                        </p>
-                    </div>
-                    <div className="rounded-xl bg-muted/50 px-3 py-2 text-xs text-muted-foreground break-all font-mono">
-                        {formUrl}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={handlePrint}
-                            className="flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700"
-                        >
-                            <Printer className="h-4 w-4" />
-                            Print QR
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleCopy}
-                            className="flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted/50"
-                        >
-                            <Copy className="h-4 w-4" />
-                            {copied ? 'Tersalin!' : 'Salin Link'}
-                        </button>
-                    </div>
+
+                <div className="flex justify-center rounded-2xl bg-white p-5">
+                    <QRCodeSVG
+                        ref={svgRef}
+                        value={qrUrl}
+                        size={200}
+                        level="M"
+                        includeMargin={false}
+                    />
+                </div>
+
+                <p className="mt-3 text-center text-xs text-muted-foreground break-all font-mono">
+                    {qrUrl}
+                </p>
+
+                <div className="mt-4 flex gap-2">
+                    <button
+                        onClick={handleDownload}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl border py-2.5 text-sm font-semibold text-foreground hover:bg-muted/50"
+                    >
+                        <Download className="h-4 w-4" />
+                        Unduh SVG
+                    </button>
+                    <button
+                        onClick={handlePrint}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-teal-600 py-2.5 text-sm font-semibold text-white hover:bg-teal-700"
+                    >
+                        <QrCode className="h-4 w-4" />
+                        Cetak
+                    </button>
                 </div>
             </div>
         </div>
@@ -166,8 +170,9 @@ function QrCard() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function AdminBukuTamu({ entries, filters, stats }: Props) {
-    const [search, setSearch] = useState(filters.search);
+    const [search, setSearch]   = useState(filters.search);
     const [tanggal, setTanggal] = useState(filters.tanggal);
+    const [showQR, setShowQR]   = useState(false);
     const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const applyFilter = (newFilters: Partial<{ tanggal: string; search: string }>) => {
@@ -191,6 +196,8 @@ export default function AdminBukuTamu({ entries, filters, stats }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Buku Tamu | Admin SADESA" />
 
+            {showQR && <QRModal onClose={() => setShowQR(false)} />}
+
             <div className="flex flex-col gap-6 p-4">
                 {/* Header */}
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -198,15 +205,24 @@ export default function AdminBukuTamu({ entries, filters, stats }: Props) {
                         <h1 className="text-xl font-bold text-foreground">Buku Tamu Digital</h1>
                         <p className="text-sm text-muted-foreground">Rekap seluruh kunjungan ke Kantor Desa Cirangkong</p>
                     </div>
-                    <a
-                        href="/buku-tamu"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-teal-700"
-                    >
-                        <BookOpen className="h-4 w-4" />
-                        Buka Form Tamu
-                    </a>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowQR(true)}
+                            className="flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted/50"
+                        >
+                            <QrCode className="h-4 w-4" />
+                            Tampilkan QR
+                        </button>
+                        <a
+                            href="/buku-tamu"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-teal-700"
+                        >
+                            <BookOpen className="h-4 w-4" />
+                            Buka Form Tamu
+                        </a>
+                    </div>
                 </div>
 
                 {/* Stat cards */}
@@ -231,16 +247,11 @@ export default function AdminBukuTamu({ entries, filters, stats }: Props) {
                     />
                 </div>
 
-                {/* QR Code */}
-                <QrCard />
-
                 {/* Filter + Tabel */}
                 <div className="rounded-2xl border bg-card shadow-sm">
-                    {/* Toolbar */}
                     <div className="flex flex-wrap items-center gap-3 border-b px-6 py-4">
                         <h3 className="mr-auto font-semibold text-foreground">Data Kunjungan</h3>
 
-                        {/* Search */}
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <input
@@ -252,7 +263,6 @@ export default function AdminBukuTamu({ entries, filters, stats }: Props) {
                             />
                         </div>
 
-                        {/* Filter tanggal */}
                         <input
                             type="date"
                             value={tanggal}
@@ -271,7 +281,6 @@ export default function AdminBukuTamu({ entries, filters, stats }: Props) {
                         )}
                     </div>
 
-                    {/* Table */}
                     <div className="p-6">
                         {entries.data.length === 0 ? (
                             <div className="py-12 text-center">
@@ -301,9 +310,7 @@ export default function AdminBukuTamu({ entries, filters, stats }: Props) {
                                                     <td className="py-3 text-muted-foreground">
                                                         {(entries.current_page - 1) * entries.per_page + idx + 1}
                                                     </td>
-                                                    <td className="py-3 font-medium text-foreground">
-                                                        {item.nama_pengunjung}
-                                                    </td>
+                                                    <td className="py-3 font-medium text-foreground">{item.nama_pengunjung}</td>
                                                     <td className="py-3 text-muted-foreground">
                                                         {item.instansi ?? <span className="italic text-muted-foreground/50">—</span>}
                                                     </td>
@@ -324,7 +331,6 @@ export default function AdminBukuTamu({ entries, filters, stats }: Props) {
                                     </table>
                                 </div>
 
-                                {/* Pagination */}
                                 {entries.last_page > 1 && (
                                     <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
                                         <p>Menampilkan {entries.data.length} dari {entries.total} data</p>

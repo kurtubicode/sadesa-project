@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, RefreshControl, Linking,
+  ActivityIndicator, Alert, RefreshControl, Linking, TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
@@ -93,6 +93,7 @@ interface DetailPengajuan {
   dokumen: Dokumen[];
   riwayat?: StatusLog[];
   url_surat?: string | null;
+  ulasan?: { rating: number; komentar: string | null } | null;
 }
 
 // ─── Timeline component ───────────────────────────────────────────────────────
@@ -260,6 +261,9 @@ export default function DetailPengajuanScreen() {
   const [uploading, setUploading]         = useState(false);
   const [cancelling, setCancelling]       = useState(false);
   const [confirming, setConfirming]       = useState(false);
+  const [ulasanRating, setUlasanRating]   = useState(0);
+  const [ulasanKomentar, setUlasanKomentar] = useState("");
+  const [submittingUlasan, setSubmittingUlasan] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -356,6 +360,20 @@ export default function DetailPengajuanScreen() {
         },
       ],
     );
+  };
+
+  // ── Submit Ulasan ──────────────────────────────────────────────────────────
+  const handleSubmitUlasan = async () => {
+    if (ulasanRating === 0) { Alert.alert("Pilih Rating", "Silakan pilih bintang terlebih dahulu."); return; }
+    setSubmittingUlasan(true);
+    try {
+      await api.post(`/api/pengajuan/${id}/ulasan`, { rating: ulasanRating, komentar: ulasanKomentar || null });
+      Alert.alert("Terima Kasih!", "Ulasan Anda telah terkirim.", [{ text: "OK", onPress: () => fetchData() }]);
+    } catch (err: any) {
+      Alert.alert("Gagal", err?.response?.data?.message ?? "Gagal mengirim ulasan.");
+    } finally {
+      setSubmittingUlasan(false);
+    }
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -484,6 +502,53 @@ export default function DetailPengajuanScreen() {
             Estimasi waktu penyelesaian adalah 1–3 hari kerja sejak pengajuan diterima.
           </Text>
         </View>
+
+        {/* ── Ulasan Kepuasan ── */}
+        {data.status === "selesai" && (
+          data.ulasan ? (
+            <View style={s.ulasanCard}>
+              <Text style={s.ulasanTitle}>Ulasan Anda</Text>
+              <View style={s.starsRow}>
+                {[1,2,3,4,5].map(i => (
+                  <Ionicons key={i} name="star" size={22} color={i <= data.ulasan!.rating ? "#F59E0B" : COLORS.border} />
+                ))}
+              </View>
+              {data.ulasan.komentar ? (
+                <Text style={s.ulasanKomentar}>"{data.ulasan.komentar}"</Text>
+              ) : null}
+            </View>
+          ) : (
+            <View style={s.ulasanCard}>
+              <Text style={s.ulasanTitle}>Bagaimana pelayanan kami?</Text>
+              <Text style={s.ulasanSub}>Beri penilaian untuk membantu kami meningkatkan layanan desa.</Text>
+              <View style={s.starsRow}>
+                {[1,2,3,4,5].map(i => (
+                  <TouchableOpacity key={i} onPress={() => setUlasanRating(i)} hitSlop={8}>
+                    <Ionicons name={i <= ulasanRating ? "star" : "star-outline"} size={32} color={i <= ulasanRating ? "#F59E0B" : COLORS.border} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TextInput
+                style={s.ulasanInput}
+                placeholder="Tulis komentar (opsional)..."
+                value={ulasanKomentar}
+                onChangeText={setUlasanKomentar}
+                multiline
+                numberOfLines={3}
+                placeholderTextColor={COLORS.textMuted}
+              />
+              <TouchableOpacity
+                style={[s.ulasanBtn, ulasanRating === 0 && { opacity: 0.5 }]}
+                onPress={handleSubmitUlasan}
+                disabled={submittingUlasan || ulasanRating === 0}
+              >
+                {submittingUlasan
+                  ? <ActivityIndicator size="small" color={COLORS.white} />
+                  : <Text style={s.ulasanBtnText}>Kirim Ulasan</Text>}
+              </TouchableOpacity>
+            </View>
+          )
+        )}
 
         {/* Branding */}
         <Text style={s.branding}>SI-WARGA OFFICIAL SERVICE</Text>
@@ -626,6 +691,25 @@ const s = StyleSheet.create({
     padding: SPACING.md, marginTop: SPACING.xl,
   },
   infoBoxText: { flex: 1, fontSize: FONT.sm, color: COLORS.primary, lineHeight: 18 },
+
+  ulasanCard: {
+    backgroundColor: COLORS.white, borderRadius: RADIUS.xl,
+    padding: SPACING.lg, ...SHADOW.sm, marginTop: SPACING.xl,
+  },
+  ulasanTitle: { fontSize: FONT.lg, fontWeight: "700", color: COLORS.text, marginBottom: SPACING.xs },
+  ulasanSub:   { fontSize: FONT.sm, color: COLORS.textMuted, marginBottom: SPACING.md },
+  starsRow:    { flexDirection: "row", gap: SPACING.sm, marginBottom: SPACING.md },
+  ulasanKomentar: { fontSize: FONT.base, color: COLORS.textSecondary, fontStyle: "italic", marginTop: SPACING.xs },
+  ulasanInput: {
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
+    padding: SPACING.md, fontSize: FONT.base, color: COLORS.text,
+    textAlignVertical: "top", minHeight: 72, marginBottom: SPACING.md,
+  },
+  ulasanBtn: {
+    backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
+    paddingVertical: SPACING.md, alignItems: "center",
+  },
+  ulasanBtnText: { color: COLORS.white, fontWeight: "700", fontSize: FONT.md },
 
   branding: {
     textAlign: "center", fontSize: FONT.xs,

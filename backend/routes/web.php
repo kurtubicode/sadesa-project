@@ -21,9 +21,9 @@ use App\Http\Controllers\Staff\StaffPengajuanController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
-Route::inertia('/', 'welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
+use App\Http\Controllers\WelcomeController;
+
+Route::get('/', [WelcomeController::class, 'index'])->name('home');
 
 // ─── Informasi publik (tanpa auth) ────────────────────────────────────────────
 Route::get('informasi',        [InformasiController::class, 'index'])->name('informasi.index');
@@ -32,6 +32,9 @@ Route::get('informasi/{slug}', [InformasiController::class, 'show'])->name('info
 // ─── Buku Tamu publik (tanpa auth) ────────────────────────────────────────────
 Route::get('buku-tamu',  [BukuTamuController::class, 'create'])->name('buku-tamu.create');
 Route::post('buku-tamu', [BukuTamuController::class, 'store'])->name('buku-tamu.store');
+
+// ─── Pantau Antrean publik (UC-35) ────────────────────────────────────────────
+Route::get('antrean', [\App\Http\Controllers\PantauAntreanController::class, 'index'])->name('antrean.publik');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -105,6 +108,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('pengajuan/{pengajuan}/download-surat',      [StaffPengajuanController::class, 'downloadSurat'])->name('pengajuan.download-surat');
         Route::patch('pengajuan/{pengajuan}/siap-diambil',      [StaffPengajuanController::class, 'siapDiambil'])->name('pengajuan.siap-diambil');
         Route::patch('pengajuan/{pengajuan}/selesai',           [StaffPengajuanController::class, 'selesai'])->name('pengajuan.selesai');
+
+        // Pelayanan Loket (offline walk-in)
+        Route::get('loket',                                     [StaffPengajuanController::class, 'loket'])->name('loket');
+        Route::post('loket',                                    [StaffPengajuanController::class, 'loketStore'])->name('loket.store');
+        Route::get('loket/cari-nik',                            [StaffPengajuanController::class, 'cariNik'])->name('loket.cari-nik');
 
         // Pengaduan
         Route::get('pengaduan',                                 [StaffPengaduanController::class, 'index'])->name('pengaduan');

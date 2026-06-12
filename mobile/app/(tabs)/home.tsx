@@ -328,10 +328,10 @@ export default function BerandaScreen() {
         />
         <QuickAction
           icon={
-            <Ionicons name="book-outline" size={24} color="#0F766E" />
+            <Ionicons name="book-outline" size={24} color={COLORS.primary} />
           }
           label="BUKU TAMU"
-          color="#0F766E"
+          color={COLORS.primary}
           onPress={() => router.push("/buku-tamu" as any)}
         />
       </View>

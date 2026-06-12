@@ -1,6 +1,7 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import PublicLayout from '@/layouts/public-layout';
 
 export default function BukuTamu() {
     const { props } = usePage<{ flash?: { sukses?: string } }>();
@@ -26,25 +27,13 @@ export default function BukuTamu() {
     };
 
     return (
-        <>
-            <Head title="Buku Tamu Digital — SADESA" />
+        <PublicLayout>
+            <Head title="Buku Tamu Digital | Pemerintah Desa Cirangkong" />
 
-            <div className="min-h-screen bg-gray-50">
-                {/* Nav */}
-                <div className="border-b bg-white px-4 py-3 flex items-center gap-3">
-                    <a
-                        href="/"
-                        className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                        aria-label="Kembali"
-                    >
-                        <ArrowLeft className="h-5 w-5 text-gray-600" />
-                    </a>
-                    <span className="font-semibold text-gray-900">Buku Tamu</span>
-                </div>
-
-                <div className="mx-auto max-w-lg px-4 py-8">
+            <div className="min-h-screen bg-gray-50 py-10">
+                <div className="mx-auto max-w-lg px-4">
                     {submitted ? (
-                        /* ── Success ───────────────────────────────────── */
+                        /* ── Success ─────────────────────────────────── */
                         <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
                             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-teal-50">
                                 <CheckCircle className="h-9 w-9 text-teal-600" />
@@ -63,9 +52,8 @@ export default function BukuTamu() {
                             </button>
                         </div>
                     ) : (
-                        /* ── Form ─────────────────────────────────────── */
+                        /* ── Form ───────────────────────────────────── */
                         <div className="rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                            {/* Heading */}
                             <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
                                 Layanan Digital
                             </p>
@@ -164,6 +152,6 @@ export default function BukuTamu() {
                     </p>
                 </div>
             </div>
-        </>
+        </PublicLayout>
     );
 }
