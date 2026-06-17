@@ -68,15 +68,18 @@ npx eslint .
 
 ### Backend — `.env`
 Salin `.env.example` → `.env`, lalu isi:
+
 ```
 DB_DATABASE=sadesa
 APP_URL=http://localhost:8000
 ```
 
 ### Mobile — `.env`
+
 ```
 EXPO_PUBLIC_API_URL=http://<IP_LOKAL>:8000
 ```
+
 Gunakan IP LAN (bukan `localhost`) agar device fisik/emulator bisa menjangkau backend. Cek dengan `ipconfig` (Windows).
 
 ---

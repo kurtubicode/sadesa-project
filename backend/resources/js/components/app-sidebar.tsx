@@ -10,7 +10,6 @@ import {
     History,
     LayoutDashboard,
     ListOrdered,
-    LogOut,
     Map,
     Megaphone,
     Newspaper,
@@ -19,6 +18,7 @@ import {
     ScrollText,
     Send,
     Settings,
+    ShieldCheck,
     UserCheck,
     UserCog,
     Users,
@@ -40,20 +40,21 @@ import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import type { Auth } from '@/types/auth';
 
-// ─── Nav items per role (matching design kit NAV spec) ────────────────────────
+// ─── Nav items per role ────────────────────────────────────────────────────────
 
 const adminNavItems: NavItem[] = [
     { title: 'Dashboard',            href: dashboard(),                  icon: LayoutDashboard },
-    { title: 'Data Kependudukan',    href: '/admin/verifikasi-warga',    icon: Users },
-    { title: 'Manajemen Akun',       href: '/admin/users',               icon: UserCog },
-    { title: 'Wilayah',              href: '/admin/data-master',         icon: Map },
-    { title: 'Layanan Surat',        href: '/admin/master-surat',        icon: FileText },
-    { title: 'Kategori Pengaduan',   href: '/admin/pengaduan',           icon: Megaphone },
-    { title: 'Berita Desa',          href: '/admin/konten',              icon: Newspaper },
-    { title: 'Broadcast WhatsApp',   href: '/admin/pengaturan',          icon: Send },
+    { title: 'Pengajuan Surat',      href: '/admin/pengajuan',           icon: FileText },
+    { title: 'Pengaduan',            href: '/admin/pengaduan',           icon: Megaphone },
     { title: 'Antrean',              href: '/admin/pengajuan',           icon: ListOrdered },
-    { title: 'Riwayat Kunjungan',    href: '/admin/buku-tamu',           icon: History },
-    { title: 'Audit Log',            href: '/admin/audit-log',           icon: ScrollText },
+    { title: 'Master Surat',         href: '/admin/master-surat',        icon: ClipboardList },
+    { title: 'Data Kependudukan',    href: '/admin/verifikasi-warga',    icon: Users },
+    { title: 'Pengguna Sistem',      href: '/admin/users',               icon: UserCog },
+    { title: 'Wilayah & Data',       href: '/admin/data-master',         icon: Map },
+    { title: 'Berita Desa',          href: '/admin/konten',              icon: Newspaper },
+    { title: 'Buku Tamu',            href: '/admin/buku-tamu',           icon: NotebookPen },
+    { title: 'Audit Log',            href: '/admin/audit-log',           icon: ShieldCheck },
+    { title: 'Pengaturan Desa',      href: '/admin/pengaturan',          icon: Settings },
 ];
 
 const staffNavItems: NavItem[] = [
@@ -67,9 +68,9 @@ const staffNavItems: NavItem[] = [
 ];
 
 const kepalDesaNavItems: NavItem[] = [
-    { title: 'Dashboard Statistik',  href: dashboard(),                  icon: LayoutDashboard },
+    { title: 'Dashboard',            href: dashboard(),                  icon: LayoutDashboard },
     { title: 'Pengesahan Dokumen',   href: '/kepala-desa/pengajuan',     icon: FileBadge },
-    { title: 'Laporan Bulanan',      href: '/settings',                  icon: BarChart2 },
+    { title: 'Statistik Layanan',    href: '/kepala-desa/pengajuan',     icon: BarChart2 },
 ];
 
 const wargaNavItems: NavItem[] = [
@@ -77,7 +78,7 @@ const wargaNavItems: NavItem[] = [
     { title: 'Informasi Desa',       href: '/informasi',                 icon: Newspaper },
     { title: 'Pengajuan Surat',      href: '/warga/pengajuan',           icon: FileText },
     { title: 'Pengaduan',            href: '/warga/pengaduan',           icon: Megaphone },
-    { title: 'Verifikasi Identitas', href: '/verifikasi',                icon: UserCheck },
+    { title: 'Data Kependudukan',    href: '/warga/data-diri',           icon: UserCheck },
 ];
 
 const footerNavItems: NavItem[] = [];
@@ -86,12 +87,12 @@ const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     const { auth } = usePage<{ auth: Auth }>().props;
-    const role = auth?.user?.role ?? 'staff';
+    const role = auth?.user?.role ?? 'warga';
 
     const navItems =
         role === 'admin'       ? adminNavItems      :
-        role === 'kepala_desa' ? kepalDesaNavItems   :
-        role === 'staff'       ? staffNavItems       :
+        role === 'kepala_desa' ? kepalDesaNavItems  :
+        role === 'staff'       ? staffNavItems      :
                                  wargaNavItems;
 
     return (

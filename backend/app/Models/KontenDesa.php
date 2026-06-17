@@ -19,6 +19,26 @@ class KontenDesa extends Model
         'status',
     ];
 
+    /**
+     * Otomatisasi pembuatan slug saat data disimpan
+     */
+    protected static function booted()
+    {
+        // Saat admin membuat berita/pengumuman baru
+        static::creating(function ($kontenDesa) {
+            if (empty($kontenDesa->slug)) {
+                $kontenDesa->slug = static::buatSlug($kontenDesa->judul);
+            }
+        });
+
+        // Saat admin mengubah/mengedit judul berita/pengumuman
+        static::updating(function ($kontenDesa) {
+            if ($kontenDesa->isDirty('judul')) {
+                $kontenDesa->slug = static::buatSlug($kontenDesa->judul);
+            }
+        });
+    }
+
     public function admin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'admin_id');
