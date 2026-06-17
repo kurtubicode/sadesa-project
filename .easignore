@@ -1,0 +1,6 @@
+# Exclude backend (Laravel) - not needed for mobile EAS build
+backend/
+
+# Common excludes
+.git/
+*.log

@@ -41,20 +41,19 @@ class AdminKontenController extends Controller
     {
         $data = $request->validate([
             'judul'  => 'required|string|max:255',
-            'konten' => 'required|string',
+            'konten' => 'required|string', // String HTML dari WYSIWYG Editor otomatis masuk ke sini
             'tipe'   => 'required|in:berita,pengumuman',
             'status' => 'required|in:draft,published',
         ]);
 
+        // Beres! Logika 'slug' sudah dibuang dari sini karena sudah otomatis ditangani Model Hook
         $konten = KontenDesa::create([
             ...$data,
-            'slug'     => KontenDesa::buatSlug($data['judul']),
             'admin_id' => auth()->id(),
         ]);
 
         AuditLog::catat('buat_konten', KontenDesa::class, $konten->id);
 
-        // Kirim notifikasi ke semua warga aktif saat langsung dipublish
         if ($konten->status === 'published') {
             $this->broadcastInformasi($konten);
         }
@@ -71,16 +70,12 @@ class AdminKontenController extends Controller
             'status' => 'required|in:draft,published',
         ]);
 
-        // Regenerate slug hanya jika judul berubah
-        if ($data['judul'] !== $konten->judul) {
-            $data['slug'] = KontenDesa::buatSlug($data['judul']);
-        }
-
+        // Manis! Logika pengecekan judul dan regenerasi slug manual juga sudah dibuang dari sini
         $wasDraft = $konten->status === 'draft';
         $konten->update($data);
+        
         AuditLog::catat('update_konten', KontenDesa::class, $konten->id);
 
-        // Kirim notifikasi jika baru dipublish dari draft
         if ($wasDraft && $konten->fresh()->status === 'published') {
             $this->broadcastInformasi($konten->fresh());
         }

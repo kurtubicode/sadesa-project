@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "sadesamobile",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "updates": {
       "enabled": false,
       "url": "https://u.expo.dev/a1bc3e43-08aa-4387-aa1b-51477b87e738"
@@ -26,7 +26,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.kurtubisorganization.sadesamobile",
-      "newArchEnabled": false
+      "newArchEnabled": true
     },
     "web": {
       "output": "static",
@@ -48,7 +48,14 @@
       ],
       "expo-secure-store",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Aplikasi SADESA memerlukan akses kamera untuk scan QR Code buku tamu.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
