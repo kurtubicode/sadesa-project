@@ -205,8 +205,15 @@ class StaffPengajuanController extends Controller
             ->orderBy('nama_surat')
             ->get();
 
+        $wargaList = User::where('role', 'warga')
+            ->where('status', 'aktif')
+            ->select('id', 'name', 'nik', 'email', 'phone')
+            ->orderBy('name')
+            ->get();
+
         return Inertia::render('staff/loket', [
             'masterSurat' => $masterSurat,
+            'wargaList'   => $wargaList,
         ]);
     }
 

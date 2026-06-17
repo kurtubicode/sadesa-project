@@ -46,6 +46,12 @@
           }
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SADESA membutuhkan akses lokasi untuk menandai titik laporan pengaduan."
+        }
+      ],
       "expo-secure-store",
       "expo-font",
       "expo-web-browser"

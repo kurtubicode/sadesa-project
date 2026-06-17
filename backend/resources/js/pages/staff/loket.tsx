@@ -1,6 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react';
-import { CheckCircle, ConciergeBell, FileText, IdCard, Info, Loader2, Search, Send, User, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { ConciergeBell, IdCard, Loader2, Search, Send, User, Users, X } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,28 +26,36 @@ interface WargaData {
 
 interface Props {
     masterSurat: MasterSurat[];
+    wargaList: WargaData[];
 }
-
-const STEPS = ['Identifikasi Warga', 'Pilih Layanan', 'Detail & Konfirmasi'];
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Layanan Publik', href: '/staff/pengajuan' },
     { title: 'Pelayanan Loket', href: '/staff/loket' },
 ];
 
-export default function StaffLoket({ masterSurat }: Props) {
+export default function StaffLoket({ masterSurat, wargaList }: Props) {
     const { errors } = usePage<{ errors: Record<string, string> }>().props;
 
-    const [step, setStep] = useState(0);
+    // Mode: 'nik' = cari by NIK, 'list' = pilih dari daftar
+    const [mode, setMode] = useState<'nik' | 'list'>('nik');
+
+    // NIK search state
     const [nik, setNik] = useState('');
-    const [warga, setWarga] = useState<WargaData | null>(null);
     const [nikError, setNikError] = useState<string | null>(null);
     const [searching, setSearching] = useState(false);
+    const nikRef = useRef<HTMLInputElement>(null);
+
+    // Warga list search state
+    const [listSearch, setListSearch] = useState('');
+
+    // Selected warga
+    const [warga, setWarga] = useState<WargaData | null>(null);
+
+    // Form state
     const [masterSuratId, setMasterSuratId] = useState('');
     const [keperluan, setKeperluan] = useState('');
     const [submitting, setSubmitting] = useState(false);
-
-    const nikRef = useRef<HTMLInputElement>(null);
 
     async function cariNik() {
         if (nik.length !== 16) { setNikError('NIK harus 16 digit.'); return; }
@@ -71,12 +79,23 @@ export default function StaffLoket({ masterSurat }: Props) {
         }
     }
 
-    function clearWarga() { setWarga(null); setNik(''); setNikError(null); setTimeout(() => nikRef.current?.focus(), 50); }
+    function clearWarga() {
+        setWarga(null);
+        setNik('');
+        setNikError(null);
+        setListSearch('');
+        setTimeout(() => nikRef.current?.focus(), 50);
+    }
+
+    function selectWarga(w: WargaData) {
+        setWarga(w);
+        setNik(w.nik);
+    }
 
     function handleSubmit() {
         setSubmitting(true);
         router.post('/staff/loket', {
-            nik,
+            nik: warga?.nik ?? nik,
             master_surat_id: masterSuratId,
             keperluan,
         }, {
@@ -84,218 +103,267 @@ export default function StaffLoket({ masterSurat }: Props) {
         });
     }
 
+    const filteredWarga = useMemo(() => {
+        const q = listSearch.toLowerCase();
+        if (!q) return wargaList;
+        return wargaList.filter(w =>
+            w.name.toLowerCase().includes(q) ||
+            w.nik.includes(q)
+        );
+    }, [wargaList, listSearch]);
+
     const selectedSurat = masterSurat.find(s => String(s.id) === masterSuratId);
+    const canSubmit = !!warga && !!masterSuratId;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pelayanan Loket" />
 
-            <div className="mx-auto max-w-3xl space-y-6 py-6">
+            <div className="p-6">
                 {/* Header */}
-                <div className="flex items-start justify-between gap-4">
+                <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Buat Pengajuan Surat (Warga Offline)</h1>
-                        <p className="mt-1 text-sm text-gray-500">Gunakan formulir ini untuk memproses permohonan surat bagi warga yang datang langsung ke kantor desa.</p>
+                        <h1 className="text-xl font-bold text-foreground">Pelayanan Loket</h1>
+                        <p className="text-sm text-muted-foreground">Buat pengajuan surat untuk warga yang datang langsung ke kantor desa.</p>
                     </div>
-                    <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
-                        <span className="h-2 w-2 rounded-full bg-green-500" />MODE OFFLINE
+                    <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <span className="h-2 w-2 rounded-full bg-green-500" /> MODE OFFLINE
                     </span>
                 </div>
 
-                {/* Stepper */}
-                <div className="rounded-xl border bg-white shadow-sm">
-                    <div className="flex border-b">
-                        {STEPS.map((s, i) => (
-                            <div key={i} className={`flex flex-1 items-center gap-2.5 px-5 py-4 text-sm ${i === step ? 'border-b-2 border-teal-600' : 'border-b-2 border-transparent'}`} style={{ marginBottom: -1 }}>
-                                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${i <= step ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                                    {i < step ? <CheckCircle size={14} strokeWidth={3} /> : i + 1}
-                                </span>
-                                <span className={i === step ? 'font-medium text-gray-900' : 'text-gray-400'}>{s}</span>
+                <div className="grid gap-6 lg:grid-cols-3">
+                    {/* Kiri: form input */}
+                    <div className="space-y-5 lg:col-span-2">
+
+                        {/* Identifikasi Warga */}
+                        <div className="rounded-xl border bg-card shadow-sm">
+                            {/* Tab mode */}
+                            <div className="flex border-b">
+                                <button
+                                    onClick={() => { setMode('nik'); clearWarga(); }}
+                                    className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                                        mode === 'nik'
+                                            ? 'border-b-2 border-teal-600 text-teal-600'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    <IdCard className="h-4 w-4" /> Cari NIK
+                                </button>
+                                <button
+                                    onClick={() => { setMode('list'); clearWarga(); }}
+                                    className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                                        mode === 'list'
+                                            ? 'border-b-2 border-teal-600 text-teal-600'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                >
+                                    <Users className="h-4 w-4" /> Pilih dari Daftar
+                                </button>
                             </div>
-                        ))}
-                    </div>
 
-                    <div className="p-6">
-                        {/* ── Step 0: Identifikasi Warga ─────────────── */}
-                        {step === 0 && (
-                            <div className="space-y-5">
-                                <div>
-                                    <div className="mb-1 flex items-center gap-2 text-base font-semibold text-gray-900">
-                                        <IdCard size={18} className="text-teal-600" /> Cari Data Warga
-                                    </div>
-                                    <p className="mb-4 text-sm text-gray-500">Masukkan Nomor Induk Kependudukan (NIK) untuk menarik data dari database kependudukan desa.</p>
-
-                                    {!warga ? (
-                                        <div className="space-y-2">
-                                            <div className="flex gap-3">
-                                                <div className="relative flex-1">
-                                                    <IdCard size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                    <Input
-                                                        ref={nikRef}
-                                                        value={nik}
-                                                        onChange={e => { setNik(e.target.value.replace(/\D/g, '').slice(0, 16)); setNikError(null); }}
-                                                        onKeyDown={e => e.key === 'Enter' && cariNik()}
-                                                        placeholder="Masukkan 16 digit NIK..."
-                                                        className="pl-9 font-mono"
-                                                        maxLength={16}
-                                                    />
-                                                </div>
-                                                <Button onClick={cariNik} disabled={searching || nik.length !== 16} className="gap-2 bg-teal-600 hover:bg-teal-700">
-                                                    {searching ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                                                    Cari NIK
-                                                </Button>
+                            <div className="p-5">
+                                {/* Warga terpilih */}
+                                {warga ? (
+                                    <div className="flex items-center justify-between rounded-lg border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-900/20">
+                                        <div className="flex items-center gap-3">
+                                            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-teal-600 text-white">
+                                                <User className="h-5 w-5" />
                                             </div>
-                                            {nikError && <p className="text-sm text-red-600">{nikError}</p>}
-                                            {!nikError && (
-                                                <div className="rounded-lg border border-dashed bg-gray-50 p-4 text-center text-sm text-gray-400">
-                                                    Data warga akan tampil secara otomatis setelah NIK ditemukan
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-teal-600 text-white">
-                                                        <User size={20} />
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-semibold text-gray-900">{warga.name}</div>
-                                                        <div className="font-mono text-sm text-gray-500">{warga.nik}</div>
-                                                        {warga.phone && <div className="text-sm text-gray-500">{warga.phone}</div>}
-                                                    </div>
-                                                </div>
-                                                <button onClick={clearWarga} className="rounded p-1 text-gray-400 hover:text-gray-600">
-                                                    <X size={16} />
-                                                </button>
+                                            <div>
+                                                <p className="font-semibold text-foreground">{warga.name}</p>
+                                                <p className="font-mono text-sm text-muted-foreground">{warga.nik}</p>
+                                                {warga.phone && <p className="text-xs text-muted-foreground">{warga.phone}</p>}
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-
-                                <div className="flex justify-end pt-2">
-                                    <Button onClick={() => setStep(1)} disabled={!warga} className="bg-teal-600 hover:bg-teal-700">
-                                        Lanjut
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ── Step 1: Pilih Layanan ──────────────────── */}
-                        {step === 1 && (
-                            <div className="space-y-5">
-                                <div>
-                                    <div className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900">
-                                        <FileText size={18} className="text-teal-600" /> Pilih Jenis Surat
+                                        <button onClick={clearWarga} className="rounded p-1 text-muted-foreground hover:text-foreground">
+                                            <X className="h-4 w-4" />
+                                        </button>
                                     </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label className="mb-1.5 block">Layanan Administrasi <span className="text-red-500">*</span></Label>
-                                            <Select value={masterSuratId} onValueChange={setMasterSuratId}>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Pilih Jenis Surat..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {masterSurat.map(s => (
-                                                        <SelectItem key={s.id} value={String(s.id)}>
-                                                            {s.nama_surat} <span className="text-gray-400">({s.kode})</span>
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-
-                                        {selectedSurat?.persyaratan && selectedSurat.persyaratan.length > 0 && (
-                                            <div className="rounded-lg border bg-amber-50 p-4">
-                                                <div className="mb-2 text-sm font-semibold text-amber-800">Persyaratan Surat:</div>
-                                                <ul className="space-y-1">
-                                                    {selectedSurat.persyaratan.map((p, i) => (
-                                                        <li key={i} className="flex items-start gap-2 text-sm text-amber-700">
-                                                            <span className="mt-0.5 font-bold">•</span> {p}
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                ) : (
+                                    <>
+                                        {/* Mode: Cari NIK */}
+                                        {mode === 'nik' && (
+                                            <div className="space-y-2">
+                                                <div className="flex gap-3">
+                                                    <div className="relative flex-1">
+                                                        <IdCard className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                        <Input
+                                                            ref={nikRef}
+                                                            value={nik}
+                                                            onChange={e => { setNik(e.target.value.replace(/\D/g, '').slice(0, 16)); setNikError(null); }}
+                                                            onKeyDown={e => e.key === 'Enter' && cariNik()}
+                                                            placeholder="Masukkan 16 digit NIK..."
+                                                            className="pl-9 font-mono"
+                                                            maxLength={16}
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        onClick={cariNik}
+                                                        disabled={searching || nik.length !== 16}
+                                                        className="gap-2 bg-teal-600 hover:bg-teal-700"
+                                                    >
+                                                        {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                                                        Cari
+                                                    </Button>
+                                                </div>
+                                                {nikError && <p className="text-sm text-red-600">{nikError}</p>}
                                             </div>
                                         )}
-                                    </div>
-                                </div>
 
-                                <div className="flex justify-between pt-2">
-                                    <Button variant="outline" onClick={() => setStep(0)}>Kembali</Button>
-                                    <Button onClick={() => setStep(2)} disabled={!masterSuratId} className="bg-teal-600 hover:bg-teal-700">
-                                        Lanjut
-                                    </Button>
-                                </div>
+                                        {/* Mode: Pilih dari Daftar */}
+                                        {mode === 'list' && (
+                                            <div className="space-y-3">
+                                                <div className="relative">
+                                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                    <Input
+                                                        value={listSearch}
+                                                        onChange={e => setListSearch(e.target.value)}
+                                                        placeholder="Cari nama atau NIK..."
+                                                        className="pl-9"
+                                                    />
+                                                </div>
+
+                                                <div className="h-64 overflow-y-auto rounded-lg border">
+                                                    {filteredWarga.length === 0 ? (
+                                                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                                                            Tidak ada warga ditemukan
+                                                        </div>
+                                                    ) : (
+                                                        <ul className="divide-y">
+                                                            {filteredWarga.map(w => (
+                                                                <li key={w.id}>
+                                                                    <button
+                                                                        onClick={() => selectWarga(w)}
+                                                                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted transition-colors"
+                                                                    >
+                                                                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+                                                                            <User className="h-4 w-4" />
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <p className="truncate text-sm font-medium text-foreground">{w.name}</p>
+                                                                            <p className="font-mono text-xs text-muted-foreground">{w.nik}</p>
+                                                                        </div>
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+
+                                                <p className="text-xs text-muted-foreground">
+                                                    {filteredWarga.length} dari {wargaList.length} warga
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {errors.nik && <p className="mt-2 text-sm text-red-600">{errors.nik}</p>}
                             </div>
-                        )}
+                        </div>
 
-                        {/* ── Step 2: Detail & Konfirmasi ────────────── */}
-                        {step === 2 && (
-                            <div className="space-y-5">
+                        {/* Jenis Surat & Keperluan */}
+                        <div className="rounded-xl border bg-card p-5 shadow-sm">
+                            <h2 className="mb-4 flex items-center gap-2 font-semibold text-foreground">
+                                <ConciergeBell className="h-4 w-4 text-teal-600" /> Jenis Surat & Keperluan
+                            </h2>
+
+                            <div className="space-y-4">
                                 <div>
-                                    <div className="mb-4 flex items-center gap-2 text-base font-semibold text-gray-900">
-                                        <ConciergeBell size={18} className="text-teal-600" /> Detail & Konfirmasi
-                                    </div>
-
-                                    {/* Summary */}
-                                    <div className="mb-4 rounded-xl border bg-gray-50 p-4 text-sm">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">Nama Warga</div>
-                                                <div className="mt-1 font-medium text-gray-900">{warga?.name}</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">NIK</div>
-                                                <div className="mt-1 font-mono font-medium text-gray-900">{warga?.nik}</div>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">Jenis Surat</div>
-                                                <div className="mt-1 font-medium text-gray-900">{selectedSurat?.nama_surat}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Label className="mb-1.5 block">Keperluan Surat</Label>
-                                        <Textarea
-                                            rows={3}
-                                            value={keperluan}
-                                            onChange={e => setKeperluan(e.target.value)}
-                                            placeholder="Contoh: Digunakan untuk persyaratan pendaftaran beasiswa sekolah anak..."
-                                        />
-                                    </div>
-
-                                    {errors.nik && <p className="text-sm text-red-600">{errors.nik}</p>}
-                                    {errors.master_surat_id && <p className="text-sm text-red-600">{errors.master_surat_id}</p>}
+                                    <Label className="mb-1.5 block">
+                                        Layanan Administrasi <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Select value={masterSuratId} onValueChange={setMasterSuratId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Pilih jenis surat..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {masterSurat.map(s => (
+                                                <SelectItem key={s.id} value={String(s.id)}>
+                                                    {s.nama_surat} <span className="text-muted-foreground">({s.kode})</span>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.master_surat_id && <p className="mt-1 text-sm text-red-600">{errors.master_surat_id}</p>}
                                 </div>
 
-                                <div className="flex justify-between pt-2">
-                                    <Button variant="outline" onClick={() => setStep(1)}>Kembali</Button>
-                                    <Button onClick={handleSubmit} disabled={submitting} className="gap-2 bg-teal-600 hover:bg-teal-700">
-                                        {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                                        Submit Pengajuan
-                                    </Button>
+                                {selectedSurat?.persyaratan && selectedSurat.persyaratan.length > 0 && (
+                                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                                        <p className="mb-2 text-sm font-semibold text-amber-800 dark:text-amber-300">Persyaratan:</p>
+                                        <ul className="space-y-1">
+                                            {selectedSurat.persyaratan.map((p, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+                                                    <span className="mt-0.5 font-bold">•</span> {p}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <Label className="mb-1.5 block">
+                                        Keperluan Surat <span className="text-xs text-muted-foreground">(opsional)</span>
+                                    </Label>
+                                    <Textarea
+                                        rows={3}
+                                        value={keperluan}
+                                        onChange={e => setKeperluan(e.target.value)}
+                                        placeholder="Contoh: Digunakan untuk persyaratan pendaftaran beasiswa..."
+                                    />
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
 
-                    {/* Footer note */}
-                    <div className="flex items-center justify-between border-t bg-gray-50 px-6 py-3">
-                        <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                            <Info size={14} /> Pastikan seluruh data yang diinput telah sesuai dengan dokumen asli fisik warga.
-                        </span>
-                    </div>
-                </div>
+                    {/* Kanan: ringkasan & submit */}
+                    <div className="space-y-4">
+                        <div className="rounded-xl border bg-card p-5 shadow-sm">
+                            <h2 className="mb-4 font-semibold text-foreground">Ringkasan Pengajuan</h2>
 
-                {/* Info banner */}
-                <div className="flex items-center gap-4 rounded-xl bg-teal-700 p-5 text-white">
-                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-white/20">
-                        <CheckCircle size={22} />
-                    </div>
-                    <div>
-                        <div className="text-sm font-semibold">Integritas Data Terjamin</div>
-                        <div className="mt-0.5 text-xs text-teal-100">Setiap pengajuan offline tetap akan tercatat secara digital di server SADESA.</div>
+                            <dl className="space-y-3 text-sm">
+                                <div>
+                                    <dt className="text-xs text-muted-foreground">Nama Warga</dt>
+                                    <dd className="mt-0.5 font-medium text-foreground">{warga?.name ?? '—'}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-xs text-muted-foreground">NIK</dt>
+                                    <dd className="mt-0.5 font-mono font-medium text-foreground">{warga?.nik ?? '—'}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-xs text-muted-foreground">Jenis Surat</dt>
+                                    <dd className="mt-0.5 font-medium text-foreground">{selectedSurat?.nama_surat ?? '—'}</dd>
+                                </div>
+                                {keperluan && (
+                                    <div>
+                                        <dt className="text-xs text-muted-foreground">Keperluan</dt>
+                                        <dd className="mt-0.5 text-foreground">{keperluan}</dd>
+                                    </div>
+                                )}
+                            </dl>
+
+                            <div className="my-4 border-t" />
+
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={!canSubmit || submitting}
+                                className="w-full gap-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50"
+                            >
+                                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                Submit Pengajuan
+                            </Button>
+
+                            {!warga && (
+                                <p className="mt-2 text-center text-xs text-muted-foreground">Pilih warga terlebih dahulu</p>
+                            )}
+                            {warga && !masterSuratId && (
+                                <p className="mt-2 text-center text-xs text-muted-foreground">Pilih jenis surat terlebih dahulu</p>
+                            )}
+                        </div>
+
+                        <p className="text-center text-xs text-muted-foreground">
+                            Setiap pengajuan offline tetap dicatat secara digital di sistem SADESA.
+                        </p>
                     </div>
                 </div>
             </div>

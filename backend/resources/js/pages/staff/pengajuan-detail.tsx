@@ -424,6 +424,15 @@ function PanelSelesai({ pengajuanId }: { pengajuanId: number }) {
                 Warga sudah dinotifikasi. Setelah warga mengambil surat, klik konfirmasi di bawah.
             </p>
 
+            <a
+                href={`/staff/pengajuan/${pengajuanId}/download-surat`}
+                target="_blank"
+                rel="noopener"
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-teal-400 py-2 text-sm font-medium text-teal-700 hover:bg-teal-100 dark:text-teal-300"
+            >
+                ⬇ Cetak Ulang PDF
+            </a>
+
             {!ok ? (
                 <button
                     type="button"
@@ -463,7 +472,7 @@ export default function StaffPengajuanDetail({ pengajuan, penduduk }: Props) {
     const label = STATUS_LABEL[pengajuan.status] ?? pengajuan.status;
 
     const bisaDiVerifikasi = ['menunggu', 'diproses'].includes(pengajuan.status);
-    const bisaCetak        = pengajuan.status === 'disetujui' && !!pengajuan.surat_output;
+    const bisaCetak        = pengajuan.status === 'disetujui';
     const bisaSelesai      = pengajuan.status === 'siap_diambil';
     const sudahSelesai     = pengajuan.status === 'selesai';
     const adaPreview       = ['menunggu_pengesahan', 'disetujui', 'siap_diambil', 'selesai'].includes(pengajuan.status);
