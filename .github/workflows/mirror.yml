@@ -1,9 +1,9 @@
-name: Sync ke Mirror
+name: Sync Backend ke Mirror
 
 on:
   push:
     branches:
-      - main # Ganti ke 'master' jika branch utama kamu namanya master
+      - main
 
 jobs:
   sync:
@@ -14,7 +14,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Push kode ke repo mirror
+      - name: Push HANYA folder backend ke repo mirror
         run: |
-          git remote add mirror https://wanna-beyours:${{ secrets.MIRROR_TOKEN }}@github.com/wanna-beyours/backend.git
-          git push mirror main:main --force
+          # Potong folder 'backend' dan jadikan branch sementara bernama 'backend-only'
+          git subtree split --prefix=backend -b backend-only
+          
+          # Push branch sementara tersebut ke repo mirror
+          git push https://wanna-beyours:${{ secrets.MIRROR_TOKEN }}@github.com/wanna-beyours/backend.git backend-only:main --force
