@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "updates": {
       "enabled": false,
-      "url": "https://u.expo.dev/ed7c7868-6564-44ef-bf83-7e72a1c1c852"
+      "url": "https://u.expo.dev/06d86ade-430d-4b2a-84c9-bbdf9e52efaa"
     },
     "ios": {
       "supportsTablet": true
@@ -80,7 +80,7 @@
     "extra": {
       "router": {},
       "eas": {
-        
+        "projectId": "06d86ade-430d-4b2a-84c9-bbdf9e52efaa"
       }
     },
     "owner": "kurtubidevs-team",

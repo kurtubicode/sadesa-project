@@ -283,6 +283,41 @@ class DashboardController extends Controller
         ]);
     }
 
+    // ─── Kepala Desa — Laporan Bulanan PDF ───────────────────────────────────
+
+    public function laporanBulanan(Request $request)
+    {
+        $bulan = (int) $request->input('bulan', now()->month);
+        $tahun = (int) $request->input('tahun', now()->year);
+
+        $periode = \Carbon\Carbon::createFromDate($tahun, $bulan, 1);
+
+        $pengajuan = PengajuanSurat::with(['user:id,name,nik', 'masterSurat:id,nama_surat'])
+            ->whereMonth('created_at', $bulan)
+            ->whereYear('created_at', $tahun)
+            ->orderBy('created_at')
+            ->get();
+
+        $statusCount = $pengajuan->groupBy('status')->map->count();
+        $selesai     = $statusCount->get('selesai', 0);
+        $total       = $pengajuan->count();
+
+        $pengaduan = Pengaduan::with(['user:id,name', 'kategori:id,nama_kategori'])
+            ->whereMonth('created_at', $bulan)
+            ->whereYear('created_at', $tahun)
+            ->orderBy('created_at')
+            ->get();
+
+        $appSetting = \App\Models\AppSetting::allAsArray();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.bulanan', compact(
+            'pengajuan', 'pengaduan', 'statusCount', 'selesai', 'total', 'periode', 'appSetting'
+        ))->setPaper('a4', 'portrait');
+
+        $filename = "Laporan_Bulanan_{$periode->format('Y_m')}.pdf";
+        return $pdf->download($filename);
+    }
+
     // ─── Warga ────────────────────────────────────────────────────────────────
 
     private function warga(Request $request): Response

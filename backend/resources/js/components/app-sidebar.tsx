@@ -18,6 +18,7 @@ import {
     ScrollText,
     Send,
     Settings,
+
     ShieldCheck,
     Star,
     UserCheck,
@@ -55,6 +56,7 @@ const adminNavItems: NavItem[] = [
     { title: 'Berita Desa',          href: '/admin/konten',              icon: Newspaper },
     { title: 'Buku Tamu',            href: '/admin/buku-tamu',           icon: NotebookPen },
     { title: 'Audit Log',            href: '/admin/audit-log',           icon: ShieldCheck },
+    { title: 'Broadcast Notifikasi', href: '/admin/broadcast',           icon: Send },
     { title: 'Pengaturan Desa',      href: '/admin/pengaturan',          icon: Settings },
 ];
 

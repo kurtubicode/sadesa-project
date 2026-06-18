@@ -7,7 +7,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MapView, Marker } from "@/components/native-map";
 import api from "@/lib/api";
 import { COLORS, FONT, RADIUS, SHADOW, SPACING } from "@/constants/theme";
 
@@ -188,20 +187,11 @@ export default function DetailPengaduanScreen() {
               </View>
             )}
             {data.latitude && data.longitude && (
-              <View style={styles.mapWrap}>
-                <MapView
-                  style={styles.map}
-                  region={{
-                    latitude: data.latitude,
-                    longitude: data.longitude,
-                    latitudeDelta: 0.005,
-                    longitudeDelta: 0.005,
-                  }}
-                  scrollEnabled={false}
-                  zoomEnabled={false}
-                >
-                  <Marker coordinate={{ latitude: data.latitude, longitude: data.longitude }} />
-                </MapView>
+              <View style={styles.koordinatRow}>
+                <Ionicons name="navigate-outline" size={14} color={COLORS.textMuted} />
+                <Text style={styles.koordinatText}>
+                  {Number(data.latitude).toFixed(6)}, {Number(data.longitude).toFixed(6)}
+                </Text>
               </View>
             )}
           </View>
@@ -350,8 +340,8 @@ const styles = StyleSheet.create({
 
   lokasiRow: { flexDirection: "row", gap: SPACING.sm, alignItems: "flex-start", padding: SPACING.lg },
   lokasiText: { flex: 1, fontSize: FONT.md, color: COLORS.text },
-  mapWrap: { height: 180, overflow: "hidden", borderBottomLeftRadius: RADIUS.xl, borderBottomRightRadius: RADIUS.xl },
-  map: { flex: 1 },
+  koordinatRow: { flexDirection: "row", alignItems: "center", gap: SPACING.xs, marginTop: SPACING.xs },
+  koordinatText: { fontSize: FONT.xs, color: COLORS.textMuted, fontFamily: "monospace" },
 
   // Timeline
   tlRow:  { flexDirection: "row", alignItems: "flex-start" },

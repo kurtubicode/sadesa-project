@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminAuditLogController;
+use App\Http\Controllers\Admin\AdminBroadcastController;
 use App\Http\Controllers\Warga\WargaDataDiriController;
 use App\Http\Controllers\Admin\AdminBukuTamuController;
 use App\Http\Controllers\BukuTamuController;
@@ -119,6 +120,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Pengaturan Desa (Kop Surat)
         Route::get('pengaturan',                    [AdminPengaturanController::class, 'index'])->name('pengaturan');
         Route::post('pengaturan',                   [AdminPengaturanController::class, 'update'])->name('pengaturan.update');
+
+        // Broadcast Notifikasi
+        Route::get('broadcast',                     [AdminBroadcastController::class, 'index'])->name('broadcast');
+        Route::post('broadcast',                    [AdminBroadcastController::class, 'store'])->name('broadcast.store');
     });
 
     // ─── Staff routes ─────────────────────────────────────────────────────────
@@ -162,6 +167,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('pengajuan/{pengajuan}/preview-surat',       [KepalaPengajuanController::class, 'previewSurat'])->name('pengajuan.preview-surat');
         Route::get('statistik',                                 [DashboardController::class, 'statistikLayanan'])->name('statistik');
         Route::get('penilaian',                                 [DashboardController::class, 'penilaianLayanan'])->name('penilaian');
+        Route::get('laporan-bulanan',                           [DashboardController::class, 'laporanBulanan'])->name('laporan-bulanan');
     });
 });
 

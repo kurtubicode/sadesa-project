@@ -9,7 +9,6 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import { MapView, Marker, type MapPressEvent } from "@/components/native-map";
 import api from "@/lib/api";
 import { COLORS, FONT, RADIUS, SHADOW, SPACING } from "@/constants/theme";
 
@@ -94,7 +93,7 @@ const si = StyleSheet.create({
 
 // ─── Step 1 — Form ────────────────────────────────────────────────────────────
 
-interface Koordinat { latitude: number; longitude: number; }
+export interface Koordinat { latitude: number; longitude: number; }
 
 interface Step1Props {
   selectedKat: KategoriAduan | null;
@@ -264,34 +263,19 @@ function Step1Form({
         </Text>
       </TouchableOpacity>
 
-      {/* MapView */}
-      <View style={styles.mapWrap}>
-        <MapView
-          style={styles.map}
-          region={koordinat
-            ? { ...koordinat, latitudeDelta: 0.005, longitudeDelta: 0.005 }
-            : { latitude: -6.8, longitude: 107.5, latitudeDelta: 0.05, longitudeDelta: 0.05 }
-          }
-          onPress={(e: MapPressEvent) => onKoordinatChange(e.nativeEvent.coordinate)}
-        >
-          {koordinat && <Marker coordinate={koordinat} />}
-        </MapView>
-        {!koordinat && (
-          <View style={styles.mapOverlayHint} pointerEvents="none">
-            <Ionicons name="finger-print-outline" size={22} color="#fff" />
-            <Text style={styles.mapOverlayText}>Tap peta untuk pilih titik lokasi</Text>
-          </View>
-        )}
-        {koordinat && (
-          <TouchableOpacity style={styles.mapClearBtn} onPress={() => onKoordinatChange(null)}>
-            <Ionicons name="close-circle" size={22} color={COLORS.danger} />
+      {/* Koordinat info */}
+      {koordinat ? (
+        <View style={styles.koordinatBox}>
+          <Ionicons name="location" size={16} color={COLORS.success} />
+          <Text style={styles.koordinatText}>
+            📍 {koordinat.latitude.toFixed(6)}, {koordinat.longitude.toFixed(6)}
+          </Text>
+          <TouchableOpacity onPress={() => onKoordinatChange(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="close-circle" size={18} color={COLORS.danger} />
           </TouchableOpacity>
-        )}
-      </View>
-      {koordinat && (
-        <Text style={styles.koordinatHint}>
-          📍 {koordinat.latitude.toFixed(6)}, {koordinat.longitude.toFixed(6)}
-        </Text>
+        </View>
+      ) : (
+        <Text style={styles.koordinatHint}>Tekan "Gunakan Lokasi Saya" untuk mengisi koordinat otomatis.</Text>
       )}
 
       {/* Info */}
@@ -769,29 +753,14 @@ const styles = StyleSheet.create({
   },
   btnLokasiText: { fontSize: FONT.sm, fontWeight: "700", color: COLORS.primary },
 
-  // MapView
-  mapWrap: {
-    height: 200, borderRadius: RADIUS.lg, overflow: "hidden",
-    marginTop: SPACING.sm, borderWidth: 1, borderColor: COLORS.border,
+  koordinatBox: {
+    flexDirection: "row", alignItems: "center", gap: SPACING.sm,
+    backgroundColor: COLORS.successLight, borderRadius: RADIUS.lg,
+    padding: SPACING.md, marginTop: SPACING.sm,
   },
-  map: { flex: 1 },
-  mapOverlayHint: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-end", alignItems: "center",
-    paddingBottom: SPACING.md, gap: 4,
-  },
-  mapOverlayText: {
-    fontSize: FONT.sm, fontWeight: "600", color: "#fff",
-    backgroundColor: "rgba(0,0,0,0.45)", paddingHorizontal: SPACING.sm,
-    paddingVertical: 3, borderRadius: RADIUS.sm, overflow: "hidden",
-  },
-  mapClearBtn: {
-    position: "absolute", top: SPACING.sm, right: SPACING.sm,
-    backgroundColor: "#fff", borderRadius: RADIUS.full,
-    ...SHADOW.sm,
-  },
+  koordinatText: { flex: 1, fontSize: FONT.sm, color: COLORS.success, fontWeight: "600" },
   koordinatHint: {
-    fontSize: FONT.xs, color: COLORS.textMuted, marginTop: 4,
+    fontSize: FONT.xs, color: COLORS.textMuted, marginTop: 4, fontStyle: "italic",
   },
 
   // Info box

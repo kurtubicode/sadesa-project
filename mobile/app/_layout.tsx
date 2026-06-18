@@ -1,6 +1,8 @@
 import { ThemeProvider, DefaultTheme } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as Updates from "expo-updates";
+import { useEffect } from "react";
 import "react-native-reanimated";
 import { COLORS, FONT } from "@/constants/theme";
 
@@ -29,6 +31,19 @@ const HEADER_OPTIONS = {
 } as const;
 
 export default function RootLayout() {
+  useEffect(() => {
+    if (__DEV__) return;
+    (async () => {
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch { /* silent — tidak ada koneksi atau belum ada update */ }
+    })();
+  }, []);
+
   return (
     <ThemeProvider value={SADESATheme}>
       <Stack screenOptions={HEADER_OPTIONS}>

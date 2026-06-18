@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
-import { BarChart2, CheckCircle, Clock, TrendingUp, XCircle, FileText } from 'lucide-react';
+import { BarChart2, CheckCircle, Clock, Download, TrendingUp, XCircle, FileText } from 'lucide-react';
+import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -97,6 +98,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function StatistikLayanan({ trend, status_breakdown, top_jenis_surat, ringkasan }: Props) {
     const maxJenis = Math.max(...top_jenis_surat.map(j => j.jumlah), 1);
 
+    const now   = new Date();
+    const [bulan, setBulan] = useState(now.getMonth() + 1);
+    const [tahun, setTahun] = useState(now.getFullYear());
+
+    const handleCetak = () => {
+        window.open(`/kepala-desa/laporan-bulanan?bulan=${bulan}&tahun=${tahun}`, '_blank');
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Statistik Layanan | SADESA" />
@@ -104,14 +113,45 @@ export default function StatistikLayanan({ trend, status_breakdown, top_jenis_su
             <div className="flex flex-col gap-6 p-4">
 
                 {/* ── Header ─────────────────────────────────────────────── */}
-                <div>
-                    <h1 className="flex items-center gap-2 text-xl font-black text-foreground">
-                        <BarChart2 className="h-5 w-5 text-teal-600" />
-                        Statistik Layanan
-                    </h1>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                        Rekap seluruh pengajuan surat — data akumulatif & tren bulanan
-                    </p>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h1 className="flex items-center gap-2 text-xl font-black text-foreground">
+                            <BarChart2 className="h-5 w-5 text-teal-600" />
+                            Statistik Layanan
+                        </h1>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                            Rekap seluruh pengajuan surat — data akumulatif & tren bulanan
+                        </p>
+                    </div>
+
+                    {/* Cetak Laporan Bulanan */}
+                    <div className="flex items-center gap-2 rounded-2xl border bg-card p-2 shadow-sm">
+                        <select
+                            value={bulan}
+                            onChange={e => setBulan(Number(e.target.value))}
+                            className="rounded-lg border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        >
+                            {['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'].map((m, i) => (
+                                <option key={i} value={i + 1}>{m}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={tahun}
+                            onChange={e => setTahun(Number(e.target.value))}
+                            className="rounded-lg border bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        >
+                            {[now.getFullYear(), now.getFullYear() - 1, now.getFullYear() - 2].map(y => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={handleCetak}
+                            className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-teal-700"
+                        >
+                            <Download className="h-4 w-4" />
+                            Cetak Laporan
+                        </button>
+                    </div>
                 </div>
 
                 {/* ── Ringkasan Cards ─────────────────────────────────────── */}
