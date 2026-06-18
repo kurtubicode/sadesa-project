@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\Wilayah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 
 // ═══════════════════════════════════════════════════════════════
 // PUBLIC — tidak perlu token
@@ -89,6 +90,39 @@ Route::post('/login', function (Request $request) {
         ],
         'token' => $token,
     ]);
+});
+
+Route::post('/forgot-password', function (Request $request) {
+    $request->validate(['email' => 'required|email']);
+
+    $status = Password::sendResetLink($request->only('email'));
+
+    if ($status === Password::RESET_LINK_SENT) {
+        return response()->json(['message' => 'Link reset kata sandi telah dikirim ke email Anda.']);
+    }
+
+    return response()->json(['message' => 'Email tidak ditemukan dalam sistem.'], 422);
+});
+
+Route::post('/reset-password', function (Request $request) {
+    $request->validate([
+        'token'                 => 'required|string',
+        'email'                 => 'required|email',
+        'password'              => 'required|string|min:8|confirmed',
+    ]);
+
+    $status = Password::reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        function ($user, $password) {
+            $user->forceFill(['password' => $password])->save();
+        }
+    );
+
+    if ($status === Password::PASSWORD_RESET) {
+        return response()->json(['message' => 'Kata sandi berhasil direset. Silakan masuk kembali.']);
+    }
+
+    return response()->json(['message' => 'Token tidak valid atau sudah kedaluwarsa.'], 422);
 });
 
 // Daftar jenis surat (boleh diakses publik)
@@ -212,6 +246,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/pengajuan/{id}',                  [PengajuanSuratController::class, 'batalkan']);
         // Konfirmasi surat sudah diambil (dipakai mobile app)
         Route::post('/pengajuan/{id}/konfirmasi-ambil',   [PengajuanSuratController::class, 'konfirmasiAmbil']);
+        Route::post('/pengajuan/{id}/revisi',             [PengajuanSuratController::class, 'revisi']);
         // Ulasan kepuasan layanan
         Route::post('/pengajuan/{id}/ulasan',             [UlasanController::class, 'store']);
 

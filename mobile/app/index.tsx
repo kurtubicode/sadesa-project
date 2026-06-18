@@ -218,7 +218,7 @@ export default function LoginScreen() {
               onToggle={() => setShowPass((v) => !v)}
             />
 
-            <TouchableOpacity style={styles.forgotBtn}>
+            <TouchableOpacity style={styles.forgotBtn} onPress={() => router.push("/lupa-password")}>
               <Text style={styles.forgotText}>Lupa Kata Sandi?</Text>
             </TouchableOpacity>
 

@@ -19,6 +19,7 @@ import {
     Send,
     Settings,
     ShieldCheck,
+    Star,
     UserCheck,
     UserCog,
     Users,
@@ -70,7 +71,8 @@ const staffNavItems: NavItem[] = [
 const kepalDesaNavItems: NavItem[] = [
     { title: 'Dashboard',            href: dashboard(),                  icon: LayoutDashboard },
     { title: 'Pengesahan Dokumen',   href: '/kepala-desa/pengajuan',     icon: FileBadge },
-    { title: 'Statistik Layanan',    href: '/kepala-desa/pengajuan',     icon: BarChart2 },
+    { title: 'Statistik Layanan',    href: '/kepala-desa/statistik',     icon: BarChart2 },
+    { title: 'Penilaian Layanan',    href: '/kepala-desa/penilaian',     icon: Star },
 ];
 
 const wargaNavItems: NavItem[] = [

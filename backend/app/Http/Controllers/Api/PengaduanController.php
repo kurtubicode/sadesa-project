@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\BuktiPengaduan;
 use App\Models\Pengaduan;
+use App\Services\AdminNotificationService;
 use Illuminate\Http\Request;
 
 class PengaduanController extends Controller
@@ -122,6 +123,14 @@ class PengaduanController extends Controller
                 'path_file'    => $path,
             ]);
         }
+
+        AdminNotificationService::kirim(
+            title:     'Pengaduan Baru Masuk',
+            body:      "{$request->user()->name}: {$pengaduan->judul}",
+            type:      'pengaduan',
+            actionId:  $pengaduan->id,
+            actionUrl: "/admin/pengaduan/{$pengaduan->id}",
+        );
 
         return response()->json([
             'message' => 'Pengaduan berhasil dikirim. Petugas akan segera menindaklanjuti.',

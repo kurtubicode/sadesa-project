@@ -7,6 +7,7 @@ use App\Models\DokumenPersyaratan;
 use App\Models\MasterSurat;
 use App\Models\Notifikasi;
 use App\Models\PengajuanSurat;
+use App\Services\AdminNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -133,6 +134,14 @@ class PengajuanSuratController extends Controller
             'status'          => 'menunggu',
         ]);
 
+        AdminNotificationService::kirim(
+            title:     'Pengajuan Surat Baru',
+            body:      "{$request->user()->name} mengajukan {$pengajuan->masterSurat->nama_surat} — {$pengajuan->no_pengajuan}",
+            type:      'pengajuan',
+            actionId:  $pengajuan->id,
+            actionUrl: "/admin/pengajuan/{$pengajuan->id}",
+        );
+
         return response()->json([
             'message' => 'Pengajuan berhasil dibuat. Silakan upload dokumen persyaratan.',
             'data'    => [
@@ -192,6 +201,36 @@ class PengajuanSuratController extends Controller
         $pengajuan->update(['status' => 'dibatalkan']);
 
         return response()->json(['message' => 'Pengajuan berhasil dibatalkan.']);
+    }
+
+    /**
+     * POST /api/pengajuan/{id}/revisi
+     * Buat ulang pengajuan baru berdasarkan yang ditolak.
+     */
+    public function revisi(Request $request, int $id)
+    {
+        $pengajuan = PengajuanSurat::where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        if (! in_array($pengajuan->status, ['ditolak_staff', 'ditolak_kepala'])) {
+            return response()->json([
+                'message' => 'Revisi hanya dapat dilakukan pada pengajuan yang ditolak.',
+            ], 422);
+        }
+
+        $baru = PengajuanSurat::create([
+            'no_pengajuan'   => PengajuanSurat::generateNoPengajuan(),
+            'user_id'        => $request->user()->id,
+            'master_surat_id'=> $pengajuan->master_surat_id,
+            'data_formulir'  => $pengajuan->data_formulir,
+            'status'         => 'menunggu',
+        ]);
+
+        return response()->json([
+            'message'       => 'Pengajuan revisi berhasil dibuat.',
+            'pengajuan_id'  => $baru->id,
+            'no_pengajuan'  => $baru->no_pengajuan,
+        ], 201);
     }
 
     /**

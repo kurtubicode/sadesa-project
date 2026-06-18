@@ -7,6 +7,7 @@ use App\Models\BukuTamu;
 use App\Models\KontenDesa;
 use App\Models\MasterSurat;
 use App\Models\Penduduk;
+use App\Models\Ulasan;
 use App\Models\Pengaduan;
 use App\Models\PengajuanSurat;
 use App\Models\User;
@@ -136,6 +137,34 @@ class DashboardController extends Controller
         $tingkatSelesai  = $totalBulanIni > 0 ? round(($selesaiBulanIni / $totalBulanIni) * 100) : 0;
         $jenisTerbanyak  = $chartJenisSurat->first()['label'] ?? '—';
 
+        // Breakdown status pipeline bulan ini
+        $statusBreakdown = collect([
+            ['label' => 'Menunggu',       'status' => 'menunggu',            'tone' => 'yellow'],
+            ['label' => 'Diproses',       'status' => 'diproses',            'tone' => 'blue'],
+            ['label' => 'Diverifikasi',   'status' => 'diverifikasi',        'tone' => 'purple'],
+            ['label' => 'Menunggu Sahkan','status' => 'menunggu_pengesahan', 'tone' => 'orange'],
+            ['label' => 'Disetujui',      'status' => 'disetujui',           'tone' => 'teal'],
+            ['label' => 'Selesai',        'status' => 'selesai',             'tone' => 'green'],
+            ['label' => 'Ditolak',        'status' => 'ditolak_kepala',      'tone' => 'red'],
+        ])->map(fn ($s) => [
+            'label'  => $s['label'],
+            'tone'   => $s['tone'],
+            'jumlah' => PengajuanSurat::where('status', $s['status'])
+                ->whereMonth('updated_at', now()->month)
+                ->whereYear('updated_at', now()->year)
+                ->count(),
+        ])->values();
+
+        // Trend 6 bulan terakhir
+        $trendBulanan = collect(range(5, 0))->map(function ($ago) {
+            $d = now()->subMonths($ago);
+            return [
+                'label'   => $d->locale('id')->isoFormat('MMM YY'),
+                'masuk'   => PengajuanSurat::whereMonth('created_at', $d->month)->whereYear('created_at', $d->year)->count(),
+                'selesai' => PengajuanSurat::where('status', 'selesai')->whereMonth('updated_at', $d->month)->whereYear('updated_at', $d->year)->count(),
+            ];
+        })->values();
+
         return Inertia::render('dashboard/kepala-desa', [
             'stats' => [
                 'menunggu_pengesahan'        => $menungguPengesahan,
@@ -147,10 +176,109 @@ class DashboardController extends Controller
             ],
             'menunggu_pengesahan_list' => $menungguPengesahanList,
             'chart_jenis_surat'        => $chartJenisSurat,
+            'status_breakdown'         => $statusBreakdown,
+            'trend_bulanan'            => $trendBulanan,
             'ringkasan' => [
-                'jenis_terbanyak'    => $jenisTerbanyak,
+                'jenis_terbanyak'      => $jenisTerbanyak,
                 'tingkat_penyelesaian' => $tingkatSelesai,
-                'total_bulan_ini'    => $totalBulanIni,
+                'total_bulan_ini'      => $totalBulanIni,
+            ],
+        ]);
+    }
+
+    // ─── Kepala Desa — Penilaian Layanan ─────────────────────────────────────
+
+    public function penilaianLayanan(Request $request): Response
+    {
+        $q = Ulasan::with([
+            'user:id,name',
+            'pengajuan:id,no_pengajuan,master_surat_id',
+            'pengajuan.masterSurat:id,nama_surat',
+        ])->latest();
+
+        if ($request->filled('rating')) {
+            $q->where('rating', $request->rating);
+        }
+
+        $ulasan = $q->paginate(15)->withQueryString();
+
+        $stats = [
+            'total'        => Ulasan::count(),
+            'rata_rata'    => round(Ulasan::avg('rating') ?? 0, 1),
+            'bintang5'     => Ulasan::where('rating', 5)->count(),
+            'bintang4'     => Ulasan::where('rating', 4)->count(),
+            'bintang3'     => Ulasan::where('rating', 3)->count(),
+            'bintang2'     => Ulasan::where('rating', 2)->count(),
+            'bintang1'     => Ulasan::where('rating', 1)->count(),
+        ];
+
+        return Inertia::render('kepala-desa/ulasan', [
+            'ulasan' => $ulasan,
+            'stats'  => $stats,
+            'filter' => ['rating' => $request->rating],
+        ]);
+    }
+
+    // ─── Kepala Desa — Statistik Layanan (halaman terpisah) ──────────────────
+
+    public function statistikLayanan(): Response
+    {
+        // Trend 12 bulan
+        $trend = collect(range(11, 0))->map(function ($ago) {
+            $d = now()->subMonths($ago);
+            return [
+                'label'   => $d->locale('id')->isoFormat('MMM YY'),
+                'masuk'   => PengajuanSurat::whereMonth('created_at', $d->month)->whereYear('created_at', $d->year)->count(),
+                'selesai' => PengajuanSurat::where('status', 'selesai')->whereMonth('updated_at', $d->month)->whereYear('updated_at', $d->year)->count(),
+                'ditolak' => PengajuanSurat::whereIn('status', ['ditolak_staff', 'ditolak_kepala'])->whereMonth('updated_at', $d->month)->whereYear('updated_at', $d->year)->count(),
+            ];
+        })->values();
+
+        // Breakdown status keseluruhan (all-time)
+        $statusBreakdown = collect([
+            ['label' => 'Menunggu',           'status' => 'menunggu',            'tone' => 'yellow'],
+            ['label' => 'Diproses',           'status' => 'diproses',            'tone' => 'blue'],
+            ['label' => 'Diverifikasi',       'status' => 'diverifikasi',        'tone' => 'purple'],
+            ['label' => 'Menunggu Pengesahan','status' => 'menunggu_pengesahan', 'tone' => 'orange'],
+            ['label' => 'Disetujui',          'status' => 'disetujui',           'tone' => 'teal'],
+            ['label' => 'Siap Diambil',       'status' => 'siap_diambil',        'tone' => 'teal'],
+            ['label' => 'Selesai',            'status' => 'selesai',             'tone' => 'green'],
+            ['label' => 'Ditolak Staff',      'status' => 'ditolak_staff',       'tone' => 'red'],
+            ['label' => 'Ditolak Kades',      'status' => 'ditolak_kepala',      'tone' => 'red'],
+            ['label' => 'Dibatalkan',         'status' => 'dibatalkan',          'tone' => 'red'],
+        ])->map(fn ($s) => [
+            'label'  => $s['label'],
+            'tone'   => $s['tone'],
+            'jumlah' => PengajuanSurat::where('status', $s['status'])->count(),
+        ])->values();
+
+        // Top 10 jenis surat all-time
+        $topJenisSurat = MasterSurat::withCount('pengajuanSurat as jumlah')
+            ->orderByDesc('jumlah')
+            ->take(10)
+            ->get(['id', 'nama_surat'])
+            ->map(fn ($m) => ['label' => $m->nama_surat, 'jumlah' => $m->jumlah])
+            ->values();
+
+        // Statistik ringkas
+        $total      = PengajuanSurat::count();
+        $selesai    = PengajuanSurat::where('status', 'selesai')->count();
+        $pending    = PengajuanSurat::whereIn('status', ['menunggu', 'diproses', 'diverifikasi', 'menunggu_pengesahan'])->count();
+        $ditolak    = PengajuanSurat::whereIn('status', ['ditolak_staff', 'ditolak_kepala', 'dibatalkan'])->count();
+        $bulanIni   = PengajuanSurat::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count();
+        $tingkat    = $total > 0 ? round(($selesai / $total) * 100) : 0;
+
+        return Inertia::render('kepala-desa/statistik', [
+            'trend'           => $trend,
+            'status_breakdown'=> $statusBreakdown,
+            'top_jenis_surat' => $topJenisSurat,
+            'ringkasan' => [
+                'total'       => $total,
+                'selesai'     => $selesai,
+                'pending'     => $pending,
+                'ditolak'     => $ditolak,
+                'bulan_ini'   => $bulanIni,
+                'tingkat_selesai' => $tingkat,
             ],
         ]);
     }

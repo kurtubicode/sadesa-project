@@ -261,6 +261,7 @@ export default function DetailPengajuanScreen() {
   const [uploading, setUploading]         = useState(false);
   const [cancelling, setCancelling]       = useState(false);
   const [confirming, setConfirming]       = useState(false);
+  const [revising, setRevising]           = useState(false);
   const [ulasanRating, setUlasanRating]   = useState(0);
   const [ulasanKomentar, setUlasanKomentar] = useState("");
   const [submittingUlasan, setSubmittingUlasan] = useState(false);
@@ -362,6 +363,35 @@ export default function DetailPengajuanScreen() {
     );
   };
 
+  // ── Revisi (ajukan ulang setelah ditolak) ─────────────────────────────────
+  const handleRevisi = () => {
+    Alert.alert(
+      "Ajukan Ulang",
+      "Pengajuan baru akan dibuat berdasarkan data yang sama. Lanjutkan?",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Ya, Ajukan Ulang",
+          onPress: async () => {
+            setRevising(true);
+            try {
+              const res = await api.post(`/api/pengajuan/${id}/revisi`);
+              Alert.alert(
+                "Berhasil!",
+                `Pengajuan revisi telah dibuat.\nNo: ${res.data.no_pengajuan}`,
+                [{ text: "Lihat Pengajuan", onPress: () => router.replace(`/pengajuan/${res.data.pengajuan_id}` as any) }],
+              );
+            } catch (err: any) {
+              Alert.alert("Gagal", err?.response?.data?.message ?? "Gagal membuat revisi.");
+            } finally {
+              setRevising(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   // ── Submit Ulasan ──────────────────────────────────────────────────────────
   const handleSubmitUlasan = async () => {
     if (ulasanRating === 0) { Alert.alert("Pilih Rating", "Silakan pilih bintang terlebih dahulu."); return; }
@@ -399,6 +429,7 @@ export default function DetailPengajuanScreen() {
   const canUpload     = ["menunggu", "diverifikasi", "diproses"].includes(data.status);
   const canCancel     = ["menunggu", "diverifikasi"].includes(data.status);
   const canKonfirmasi = data.status === "siap_diambil";
+  const canRevisi     = ["ditolak_staff", "ditolak_kepala"].includes(data.status);
 
   return (
     <View style={s.screen}>
@@ -444,6 +475,23 @@ export default function DetailPengajuanScreen() {
             </View>
           ) : null}
         </View>
+
+        {/* ── Box Penolakan ── */}
+        {canRevisi && (
+          <View style={s.rejectedBox}>
+            <Ionicons name="close-circle" size={20} color="#DC2626" />
+            <View style={{ flex: 1 }}>
+              <Text style={s.rejectedTitle}>
+                {data.status === "ditolak_staff" ? "Ditolak oleh Petugas" : "Ditolak oleh Kepala Desa"}
+              </Text>
+              {data.catatan ? (
+                <Text style={s.rejectedReason}>Alasan: {data.catatan}</Text>
+              ) : (
+                <Text style={s.rejectedReason}>Silakan ajukan ulang dengan melengkapi persyaratan.</Text>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* ── Timeline ── */}
         <Text style={s.sectionLabel}>STATUS PENGAJUAN</Text>
@@ -594,8 +642,27 @@ export default function DetailPengajuanScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Ajukan Ulang — tampil saat ditolak */}
+        {canRevisi && (
+          <TouchableOpacity
+            style={[s.footerBtnFilled, revising && s.btnDisabled]}
+            onPress={handleRevisi}
+            disabled={revising}
+            activeOpacity={0.85}
+          >
+            {revising ? (
+              <ActivityIndicator color={COLORS.white} size="small" />
+            ) : (
+              <>
+                <Ionicons name="refresh-outline" size={18} color={COLORS.white} />
+                <Text style={s.footerBtnFilledText}>Ajukan Ulang</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
         {/* Placeholder kosong — kalau tidak ada aksi sama sekali */}
-        {!canCancel && !canKonfirmasi && (
+        {!canCancel && !canKonfirmasi && !canRevisi && (
           <View style={s.footerInfo}>
             <Ionicons name="information-circle-outline" size={16} color={COLORS.textMuted} />
             <Text style={s.footerInfoText}>
@@ -603,9 +670,7 @@ export default function DetailPengajuanScreen() {
                 ? "Pengajuan surat telah selesai."
                 : data.status === "dibatalkan"
                   ? "Pengajuan ini sudah dibatalkan."
-                  : ["ditolak_staff", "ditolak_kepala"].includes(data.status)
-                    ? "Pengajuan ini ditolak."
-                    : "Pengajuan sedang diproses."}
+                  : "Pengajuan sedang diproses."}
             </Text>
           </View>
         )}
@@ -752,4 +817,13 @@ const s = StyleSheet.create({
     fontSize: FONT.sm, color: COLORS.textMuted, fontWeight: "500",
   },
   btnDisabled: { opacity: 0.5 },
+
+  rejectedBox: {
+    flexDirection: "row", gap: SPACING.sm, alignItems: "flex-start",
+    backgroundColor: "#FEF2F2", borderRadius: RADIUS.lg,
+    padding: SPACING.md, marginTop: SPACING.xl,
+    borderLeftWidth: 3, borderLeftColor: "#DC2626",
+  },
+  rejectedTitle: { fontSize: FONT.md, fontWeight: "700", color: "#991B1B", marginBottom: 2 },
+  rejectedReason: { fontSize: FONT.sm, color: "#7F1D1D", lineHeight: 18 },
 });

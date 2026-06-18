@@ -43,10 +43,24 @@ interface Ringkasan {
     total_bulan_ini: number;
 }
 
+interface StatusPoint {
+    label: string;
+    tone: string;
+    jumlah: number;
+}
+
+interface TrendPoint {
+    label: string;
+    masuk: number;
+    selesai: number;
+}
+
 interface Props {
     stats: Stats;
     menunggu_pengesahan_list: PengajuanItem[];
     chart_jenis_surat: ChartPoint[];
+    status_breakdown: StatusPoint[];
+    trend_bulanan: TrendPoint[];
     ringkasan: Ringkasan;
 }
 
@@ -114,13 +128,50 @@ function MiniBarChart({ data }: { data: ChartPoint[] }) {
     );
 }
 
+// ─── Status Tone Map ──────────────────────────────────────────────────────────
+
+const STATUS_TONE: Record<string, { bg: string; text: string; dot: string }> = {
+    yellow: { bg: 'bg-yellow-50 dark:bg-yellow-900/20', text: 'text-yellow-700 dark:text-yellow-400', dot: 'bg-yellow-400' },
+    blue:   { bg: 'bg-blue-50 dark:bg-blue-900/20',     text: 'text-blue-700 dark:text-blue-400',     dot: 'bg-blue-500' },
+    purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-400', dot: 'bg-purple-500' },
+    orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-400', dot: 'bg-orange-500' },
+    teal:   { bg: 'bg-teal-50 dark:bg-teal-900/20',     text: 'text-teal-700 dark:text-teal-400',     dot: 'bg-teal-500' },
+    green:  { bg: 'bg-green-50 dark:bg-green-900/20',   text: 'text-green-700 dark:text-green-400',   dot: 'bg-green-500' },
+    red:    { bg: 'bg-red-50 dark:bg-red-900/20',       text: 'text-red-700 dark:text-red-400',       dot: 'bg-red-500' },
+};
+
+// ─── Trend Bar Chart ──────────────────────────────────────────────────────────
+
+function TrendChart({ data }: { data: { label: string; masuk: number; selesai: number }[] }) {
+    const max = Math.max(...data.flatMap(d => [d.masuk, d.selesai]), 1);
+    return (
+        <div className="flex items-end gap-3" style={{ height: 140 }}>
+            {data.map((d, i) => (
+                <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                    <div className="flex w-full items-end justify-center gap-0.5" style={{ height: 100 }}>
+                        <div className="w-full rounded-t-md bg-teal-500 transition-all hover:bg-teal-400"
+                            style={{ height: `${Math.max((d.masuk / max) * 100, d.masuk > 0 ? 6 : 0)}%` }}
+                            title={`Masuk: ${d.masuk}`}
+                        />
+                        <div className="w-full rounded-t-md bg-emerald-300 transition-all hover:bg-emerald-200"
+                            style={{ height: `${Math.max((d.selesai / max) * 100, d.selesai > 0 ? 6 : 0)}%` }}
+                            title={`Selesai: ${d.selesai}`}
+                        />
+                    </div>
+                    <span className="text-[10px] font-medium text-muted-foreground">{d.label}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 // ─── Breadcrumbs ──────────────────────────────────────────────────────────────
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: dashboard() }];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function DashboardKepalaDesa({ stats, menunggu_pengesahan_list, chart_jenis_surat, ringkasan }: Props) {
+export default function DashboardKepalaDesa({ stats, menunggu_pengesahan_list, chart_jenis_surat, status_breakdown, trend_bulanan, ringkasan }: Props) {
     const { auth } = usePage<{ auth: { user: { name: string } } }>().props;
     const bulanIni = new Date().toLocaleString('id-ID', { month: 'long', year: 'numeric' });
     const today    = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -245,6 +296,51 @@ export default function DashboardKepalaDesa({ stats, menunggu_pengesahan_list, c
                                     </tbody>
                                 </table>
                             </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── Status Pipeline Bulan Ini ──────────────────────────── */}
+                <div className="rounded-2xl border bg-card shadow-sm">
+                    <div className="flex items-center justify-between border-b px-6 py-4">
+                        <h3 className="font-semibold text-foreground">Status Pengajuan Bulan Ini</h3>
+                        <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                            {new Date().toLocaleString('id-ID', { month: 'long', year: 'numeric' })}
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 xl:grid-cols-7">
+                        {status_breakdown.map((s, i) => {
+                            const tone = STATUS_TONE[s.tone] ?? STATUS_TONE.teal;
+                            return (
+                                <div key={i} className={`flex flex-col items-center gap-2 rounded-xl p-3 ${tone.bg}`}>
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full ${tone.dot} bg-opacity-20`}>
+                                        <div className={`h-2.5 w-2.5 rounded-full ${tone.dot}`} />
+                                    </div>
+                                    <span className={`text-2xl font-black tabular-nums ${tone.text}`}>{s.jumlah}</span>
+                                    <span className="text-center text-[10px] font-medium leading-tight text-muted-foreground">{s.label}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* ── Trend 6 Bulan ──────────────────────────────────────── */}
+                <div className="rounded-2xl border bg-card shadow-sm">
+                    <div className="flex items-center justify-between border-b px-6 py-4">
+                        <div className="flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-teal-600" />
+                            <h3 className="font-semibold text-foreground">Tren Pengajuan 6 Bulan</h3>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] font-semibold text-muted-foreground">
+                            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-teal-500 inline-block" /> Masuk</span>
+                            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-emerald-300 inline-block" /> Selesai</span>
+                        </div>
+                    </div>
+                    <div className="px-6 pb-4 pt-4">
+                        {trend_bulanan.every(d => d.masuk === 0 && d.selesai === 0) ? (
+                            <p className="py-8 text-center text-sm text-muted-foreground">Belum ada data.</p>
+                        ) : (
+                            <TrendChart data={trend_bulanan} />
                         )}
                     </div>
                 </div>

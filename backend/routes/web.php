@@ -39,6 +39,29 @@ Route::get('antrean', [\App\Http\Controllers\PantauAntreanController::class, 'in
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // ─── Notifikasi (semua role) ───────────────────────────────────────────────
+    Route::get('notifications/unread', function () {
+        $notifs = auth()->user()->unreadNotifications()->latest()->take(10)->get()->map(fn ($n) => [
+            'id'         => $n->id,
+            'title'      => $n->data['title'] ?? '',
+            'body'       => $n->data['body'] ?? '',
+            'type'       => $n->data['type'] ?? '',
+            'action_url' => $n->data['action_url'] ?? null,
+            'created_at' => $n->created_at->diffForHumans(),
+        ]);
+        return response()->json(['data' => $notifs, 'count' => auth()->user()->unreadNotifications()->count()]);
+    })->name('notifications.unread');
+
+    Route::post('notifications/{id}/read', function (string $id) {
+        auth()->user()->notifications()->where('id', $id)->update(['read_at' => now()]);
+        return response()->json(['ok' => true]);
+    })->name('notifications.read');
+
+    Route::post('notifications/read-all', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return response()->json(['ok' => true]);
+    })->name('notifications.read-all');
+
     // ─── Admin routes ─────────────────────────────────────────────────────────
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
 
@@ -134,7 +157,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('pengajuan/{pengajuan}',                     [KepalaPengajuanController::class, 'show'])->name('pengajuan.show');
         Route::patch('pengajuan/{pengajuan}/pengesahan',        [KepalaPengajuanController::class, 'pengesahan'])->name('pengajuan.pengesahan');
         Route::get('pengajuan/{pengajuan}/preview-surat',       [KepalaPengajuanController::class, 'previewSurat'])->name('pengajuan.preview-surat');
-
+        Route::get('statistik',                                 [DashboardController::class, 'statistikLayanan'])->name('statistik');
+        Route::get('penilaian',                                 [DashboardController::class, 'penilaianLayanan'])->name('penilaian');
     });
 });
 
