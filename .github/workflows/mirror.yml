@@ -1,0 +1,20 @@
+name: Sync ke Mirror
+
+on:
+  push:
+    branches:
+      - main # Ganti ke 'master' jika branch utama kamu namanya master
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ambil kode dari repo utama
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push kode ke repo mirror
+        run: |
+          git remote add mirror https://wanna-beyours:${{ secrets.MIRROR_TOKEN }}@github.com/wanna-beyours/backend.git
+          git push mirror main:main --force
