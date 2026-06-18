@@ -59,12 +59,7 @@ export default function PublicLayout({ children, title }: { children: React.Reac
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2.5">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 shadow">
-                            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                <polyline strokeLinecap="round" strokeLinejoin="round" points="9 22 9 12 15 12 15 22" />
-                            </svg>
-                        </div>
+                        <img src="/images/logo-cirangkong-icon.png" alt="Logo Desa Cirangkong" className="h-9 w-9 object-contain" />
                         <div>
                             <span className="text-lg font-bold leading-none">SADESA</span>
                             <p className="text-xs leading-none text-teal-600 dark:text-teal-400 font-semibold">Pemerintah Desa Cirangkong</p>
@@ -189,12 +184,7 @@ export default function PublicLayout({ children, title }: { children: React.Reac
                         {/* Brand */}
                         <div className="lg:col-span-1">
                             <div className="mb-4 flex items-center gap-2.5">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 shadow-lg shadow-teal-900/20">
-                                    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                        <polyline strokeLinecap="round" strokeLinejoin="round" points="9 22 9 12 15 12 15 22" />
-                                    </svg>
-                                </div>
+                                <img src="/images/logo-cirangkong-icon.png" alt="Logo Desa Cirangkong" className="h-9 w-9 object-contain" />
                                 <span className="text-lg font-bold text-white">SADESA</span>
                             </div>
                             <p className="text-sm leading-relaxed text-neutral-400">

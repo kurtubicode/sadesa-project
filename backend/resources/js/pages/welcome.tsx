@@ -64,12 +64,7 @@ function Navbar({ user, canRegister }: { user: PageProps['auth']['user']; canReg
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
                 {/* Logo */}
                 <a href="#beranda" className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 shadow">
-                        <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                            <polyline strokeLinecap="round" strokeLinejoin="round" points="9 22 9 12 15 12 15 22" />
-                        </svg>
-                    </div>
+                    <img src="/images/logo-cirangkong-icon.png" alt="Logo Desa Cirangkong" className="h-12 w-12 object-contain" />
                     <div>
                         <span className={`text-lg font-bold leading-none ${scrolled ? 'text-foreground' : 'text-white'}`}>SADESA</span>
                         <p className={`text-xs leading-none ${scrolled ? 'text-muted-foreground' : 'text-teal-100'}`}>Desa Cirangkong</p>
@@ -358,7 +353,7 @@ function ProfilDesa() {
                     {/* Visi Misi */}
                     <div className="space-y-6">
                         <p className="text-base leading-relaxed text-muted-foreground">
-                            Desa Cirangkong merupakan salah satu desa yang berada di wilayah Kabupaten Bandung, Jawa Barat. Dengan komitmen untuk terus berkembang, kami menghadirkan sistem digital untuk meningkatkan kualitas pelayanan kepada masyarakat.
+                            Desa Cirangkong merupakan salah satu desa yang berada di wilayah Kabupaten Subang, Jawa Barat. Dengan komitmen untuk terus berkembang, kami menghadirkan sistem digital untuk meningkatkan kualitas pelayanan kepada masyarakat.
                         </p>
 
                         <div className="rounded-2xl border-l-4 border-teal-500 bg-teal-50 p-5 dark:bg-teal-900/20">
@@ -802,12 +797,7 @@ function Footer({ canRegister }: { canRegister: boolean }) {
                     {/* Brand */}
                     <div className="lg:col-span-1">
                         <div className="mb-4 flex items-center gap-2.5">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600">
-                                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" stroke="currentColor" strokeWidth="2">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                                    <polyline strokeLinecap="round" strokeLinejoin="round" points="9 22 9 12 15 12 15 22" />
-                                </svg>
-                            </div>
+                            <img src="/images/logo-cirangkong-icon.png" alt="Logo Desa Cirangkong" className="h-12 w-12 object-contain" />
                             <span className="text-lg font-bold text-white">SADESA</span>
                         </div>
                         <p className="text-sm leading-relaxed text-gray-400">
