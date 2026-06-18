@@ -20,4 +20,5 @@ jobs:
           git subtree split --prefix=backend -b backend-only
           
           # Push branch sementara tersebut ke repo mirror
-          git push https://wanna-beyours:${{ secrets.MIRROR_TOKEN }}@github.com/wanna-beyours/backend.git backend-only:main --force
+          #git push https://wanna-beyours:${{ secrets.MIRROR_TOKEN }}@github.com/wanna-beyours/backend.git backend-only:main --force
+          git push https://${{ secrets.MIRROR_TOKEN }}@github.com/wanna-beyours/backend.git backend-only:main --force
