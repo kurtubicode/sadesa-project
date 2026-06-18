@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "sadesa-mobile",
-    "slug": "sadesa-mobile",
+    "name": "sadesa-app",
+    "slug": "sadesa-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -80,7 +80,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "ed7c7868-6564-44ef-bf83-7e72a1c1c852"
+        
       }
     },
     "owner": "kurtubidevs-team",
