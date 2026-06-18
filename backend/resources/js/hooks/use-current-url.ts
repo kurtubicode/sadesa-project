@@ -46,13 +46,19 @@ export function useCurrentUrl(): UseCurrentUrlReturn {
         const comparePath = (path: string): boolean =>
             startsWith ? urlToCompare.startsWith(path) : path === urlToCompare;
 
+        // Kalau href punya query string, bandingkan path + query terhadap page.url penuh
+        const hasQuery = urlString.includes('?');
+
         if (!urlString.startsWith('http')) {
+            if (hasQuery) {
+                const fullCurrent = currentUrl ?? page.url ?? '';
+                return fullCurrent === urlString || fullCurrent.startsWith(urlString + '&');
+            }
             return comparePath(urlString);
         }
 
         try {
             const absoluteUrl = new URL(urlString);
-
             return comparePath(absoluteUrl.pathname);
         } catch {
             return false;

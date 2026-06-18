@@ -143,6 +143,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('pengaduan/{pengaduan}/tanggapi',           [StaffPengaduanController::class, 'tanggapi'])->name('pengaduan.tanggapi');
         Route::patch('pengaduan/{pengaduan}/status',            [StaffPengaduanController::class, 'updateStatus'])->name('pengaduan.status');
 
+        // Buku Tamu
+        Route::get('buku-tamu', [AdminBukuTamuController::class, 'index'])->name('buku-tamu');
+
     });
 
     // ─── Warga routes ────────────────────────────────────────────────────────

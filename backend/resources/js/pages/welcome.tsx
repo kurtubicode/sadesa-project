@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
+    BookOpen,
     ChevronDown,
     ChevronRight,
     Clock,
@@ -12,6 +13,7 @@ import {
     MapPin,
     Menu,
     Phone,
+    QrCode,
     Shield,
     ShieldCheck,
     FileCheck,
@@ -22,6 +24,7 @@ import {
     Zap,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { dashboard, login, register } from '@/routes';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -56,6 +59,7 @@ function Navbar({ user, canRegister }: { user: PageProps['auth']['user']; canReg
         { href: '#transparansi', label: 'Transparansi' },
         { href: '#statistik', label: 'Statistik' },
         { href: '#berita', label: 'Berita' },
+        { href: '#buku-tamu', label: 'Buku Tamu' },
         { href: '#kontak', label: 'Kontak' },
     ];
 
@@ -704,6 +708,82 @@ function Berita({ berita = [] }: { berita?: any[] }) {
     );
 }
 
+// ─── Buku Tamu ────────────────────────────────────────────────────────────────
+
+function BukuTamuSection() {
+    const formUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/buku-tamu`
+        : '/buku-tamu';
+
+    return (
+        <section id="buku-tamu" className="bg-muted py-24">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="mb-14 text-center">
+                    <div className="mb-3 inline-block rounded-full bg-teal-50 px-4 py-1.5 text-sm font-semibold text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+                        Kunjungan
+                    </div>
+                    <h2 className="text-3xl font-bold text-foreground sm:text-4xl">Buku Tamu Digital</h2>
+                    <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground">
+                        Jika Anda berkunjung ke Kantor Desa Cirangkong, silakan isi buku tamu digital kami.
+                        Scan QR Code di bawah atau klik tombol untuk mengisi langsung.
+                    </p>
+                </div>
+
+                <div className="mx-auto max-w-3xl">
+                    <div className="flex flex-col items-center gap-8 rounded-3xl border bg-card p-8 shadow-sm sm:flex-row sm:items-start sm:p-12">
+                        {/* QR Code */}
+                        <div className="flex shrink-0 flex-col items-center gap-3">
+                            <div className="flex items-center justify-center rounded-2xl bg-white p-4 shadow ring-1 ring-border">
+                                <QRCodeSVG value={formUrl} size={160} level="M" />
+                            </div>
+                            <p className="text-xs text-muted-foreground">Scan dengan kamera HP</p>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-4 sm:flex-col">
+                            <div className="h-px w-16 bg-border sm:h-16 sm:w-px" />
+                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">atau</span>
+                            <div className="h-px w-16 bg-border sm:h-16 sm:w-px" />
+                        </div>
+
+                        {/* Info + CTA */}
+                        <div className="flex flex-1 flex-col gap-5">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-900/30">
+                                    <BookOpen className="h-6 w-6 text-teal-600" />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-foreground">Form Kunjungan Online</p>
+                                    <p className="text-sm text-muted-foreground">Isi data kunjungan Anda</p>
+                                </div>
+                            </div>
+
+                            <ul className="space-y-2 text-sm text-muted-foreground">
+                                {['Nama lengkap & instansi asal', 'Tujuan & keperluan kunjungan', 'Nomor HP (opsional)'].map(t => (
+                                    <li key={t} className="flex items-center gap-2">
+                                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-100 text-teal-600 dark:bg-teal-900/40">
+                                            <ChevronRight className="h-3 w-3" />
+                                        </span>
+                                        {t}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <a
+                                href="/buku-tamu"
+                                className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-teal-700 transition-colors"
+                            >
+                                <QrCode className="h-4 w-4" />
+                                Isi Buku Tamu Sekarang
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
 // ─── Kontak ───────────────────────────────────────────────────────────────────
 
 function Kontak() {
@@ -876,6 +956,7 @@ export default function Welcome({ canRegister = true, berita = [] }: { canRegist
                 <Transparansi />
                 <Statistik />
                 <Berita berita={berita} />
+                <BukuTamuSection />
                 <Kontak />
                 <Footer canRegister={canRegister} />
             </div>

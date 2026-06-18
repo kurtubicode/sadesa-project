@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Printer, Search } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
@@ -53,24 +53,31 @@ const STATUS_COLOR: Record<string, string> = {
     dibatalkan:          'bg-gray-100 text-gray-600',
 };
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: dashboard() },
-    { title: 'Antrian Pengajuan', href: '/staff/pengajuan' },
-];
+const PAGE_TITLE: Record<string, string> = {
+    menunggu:   'Verifikasi Berkas',
+    disetujui:  'Surat Siap Cetak',
+};
 
 export default function StaffPengajuan({ pengajuan, filters }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
+
+    const pageTitle = filters.status ? (PAGE_TITLE[filters.status] ?? 'Pengajuan Surat') : 'Antrean Pengajuan';
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: dashboard() },
+        { title: pageTitle, href: '/staff/pengajuan' },
+    ];
 
     const applyFilter = (extra: Record<string, string>) =>
         router.get('/staff/pengajuan', { ...filters, ...extra }, { preserveState: true });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Antrian Pengajuan | SADESA" />
+            <Head title={`${pageTitle} | SADESA`} />
 
             <div className="flex flex-col gap-6 p-4">
                 <div>
-                    <h1 className="text-xl font-bold text-foreground">Antrian Pengajuan Surat</h1>
+                    <h1 className="text-xl font-bold text-foreground">{pageTitle}</h1>
                     <p className="text-sm text-muted-foreground">Total {pengajuan.total} pengajuan</p>
                 </div>
 
@@ -153,13 +160,25 @@ export default function StaffPengajuan({ pengajuan, filters }: Props) {
                                             {new Date(item.created_at).toLocaleDateString('id-ID')}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <Link
-                                                href={`/staff/pengajuan/${item.id}`}
-                                                className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
-                                            >
-                                                <Eye className="h-3.5 w-3.5" />
-                                                {item.status === 'menunggu' || item.status === 'diproses' ? 'Proses' : 'Detail'}
-                                            </Link>
+                                            <div className="flex items-center gap-1.5">
+                                                {item.status === 'disetujui' && (
+                                                    <a
+                                                        href={`/staff/pengajuan/${item.id}/download-surat`}
+                                                        target="_blank"
+                                                        className="inline-flex items-center gap-1 rounded-md bg-teal-50 border border-teal-200 px-2.5 py-1.5 text-xs text-teal-700 hover:bg-teal-100"
+                                                    >
+                                                        <Printer className="h-3.5 w-3.5" />
+                                                        Cetak
+                                                    </a>
+                                                )}
+                                                <Link
+                                                    href={`/staff/pengajuan/${item.id}`}
+                                                    className="inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
+                                                >
+                                                    <Eye className="h-3.5 w-3.5" />
+                                                    {item.status === 'menunggu' || item.status === 'diproses' ? 'Proses' : 'Detail'}
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
