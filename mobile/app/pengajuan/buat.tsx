@@ -256,35 +256,66 @@ export default function BuatPengajuanScreen() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
+
+    // Step A: buat record pengajuan
+    let newId: number | undefined;
+    let noPengajuan = "";
     try {
       const res = await api.post("/api/pengajuan", {
         master_surat_id: selectedSurat!.id,
         data_formulir: { nama_lengkap: namaLengkap.trim(), nik: nik.trim(), keterangan: keterangan.trim() || undefined },
       });
-      const newId = res.data.data?.id;
-      const uploadDok = async (dok: DokumenItem, jenis: string) => {
-        if (!newId) return;
-        const fd = new FormData();
-        fd.append("file", { uri: dok.uri, name: dok.name, type: dok.mimeType } as any);
-        fd.append("jenis_dokumen", jenis);
-        await api.post(`/api/pengajuan/${newId}/dokumen`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-      };
+      newId        = res.data.data?.id;
+      noPengajuan  = res.data.data?.no_pengajuan ?? "";
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "Gagal mengirim pengajuan. Periksa koneksi dan coba lagi.";
+      Alert.alert("Pengajuan Gagal", msg);
+      setSubmitting(false);
+      return;
+    }
+
+    // Step B: upload dokumen (pengajuan sudah ada — jika gagal arahkan ke detail)
+    const uploadDok = async (dok: DokumenItem, jenis: string) => {
+      const fd = new FormData();
+      fd.append("file", { uri: dok.uri, name: dok.name, type: dok.mimeType } as any);
+      fd.append("jenis_dokumen", jenis);
+      await api.post(`/api/pengajuan/${newId}/dokumen`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+    };
+
+    try {
       if (dokUtama) await uploadDok(dokUtama, "Berkas Persyaratan");
       for (const dok of dokPendukung) await uploadDok(dok, "Dokumen Pendukung");
-
-      const d = res.data.data ?? {};
-      router.replace({
-        pathname: "/sukses",
-        params: {
-          type:  "pengajuan",
-          id:    String(d.id ?? ""),
-          nomor: d.no_pengajuan ?? "",
-          jenis: selectedSurat?.nama_surat ?? "",
-        },
-      } as any);
     } catch (err: any) {
-      Alert.alert("Gagal", err?.response?.data?.message ?? "Gagal mengirim pengajuan.");
-    } finally { setSubmitting(false); }
+      setSubmitting(false);
+      const serverMsg = err?.response?.data?.message;
+      const detail = serverMsg
+        ? `\n\nDetail: ${serverMsg}`
+        : err?.response?.status
+          ? `\n\nServer merespons dengan error ${err.response.status}.`
+          : "\n\nPastikan ukuran file tidak melebihi 5 MB dan format file adalah PDF, JPG, atau PNG.";
+      Alert.alert(
+        "Upload Dokumen Gagal",
+        `Pengajuan Anda (${noPengajuan}) sudah tercatat, namun dokumen gagal diunggah.${detail}\n\nAnda dapat melengkapi dokumen melalui halaman detail pengajuan.`,
+        [
+          {
+            text: "Lihat Pengajuan",
+            onPress: () => router.replace({ pathname: "/pengajuan/[id]", params: { id: String(newId) } } as any),
+          },
+        ],
+      );
+      return;
+    }
+
+    setSubmitting(false);
+    router.replace({
+      pathname: "/sukses",
+      params: {
+        type:  "pengajuan",
+        id:    String(newId ?? ""),
+        nomor: noPengajuan,
+        jenis: selectedSurat?.nama_surat ?? "",
+      },
+    } as any);
   };
 
   if (loadingInit) {
@@ -354,7 +385,7 @@ export default function BuatPengajuanScreen() {
                 <TouchableOpacity style={styles.uploadBox} onPress={pickDokUtama} activeOpacity={0.8}>
                   <Ionicons name="cloud-upload-outline" size={36} color={COLORS.primary} />
                   <Text style={styles.uploadTitle}>Pilih File Berkas</Text>
-                  <Text style={styles.uploadHint}>FORMAT JPG/PDF, MAKS 2MB</Text>
+                  <Text style={styles.uploadHint}>FORMAT JPG/PDF/PNG, MAKS 5MB</Text>
                 </TouchableOpacity>
               )}
             </FormField>
@@ -369,7 +400,7 @@ export default function BuatPengajuanScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.addDokText}>Tambahkan dokumen Anda</Text>
-                  <Text style={styles.addDokHint}>MAKS 2MB PER FILE</Text>
+                  <Text style={styles.addDokHint}>MAKS 5MB PER FILE</Text>
                 </View>
                 <View style={styles.opsionalBadge}>
                   <Text style={styles.opsionalText}>OPSIONAL</Text>

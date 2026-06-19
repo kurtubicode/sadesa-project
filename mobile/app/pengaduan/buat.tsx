@@ -2,13 +2,12 @@ import { useState, useCallback, useEffect } from "react";
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert, Image, Modal,
-  FlatList, KeyboardAvoidingView, Platform,
+  FlatList, KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import * as Location from "expo-location";
 import api from "@/lib/api";
 import { COLORS, FONT, RADIUS, SHADOW, SPACING } from "@/constants/theme";
 
@@ -93,31 +92,26 @@ const si = StyleSheet.create({
 
 // ─── Step 1 — Form ────────────────────────────────────────────────────────────
 
-export interface Koordinat { latitude: number; longitude: number; }
-
 interface Step1Props {
   selectedKat: KategoriAduan | null;
   judul: string;
   deskripsi: string;
   lokasi: string;
-  koordinat: Koordinat | null;
   buktiList: BuktiItem[];
   maxBukti: number;
   onJudulChange: (v: string) => void;
   onDeskripsiChange: (v: string) => void;
   onLokasiChange: (v: string) => void;
-  onKoordinatChange: (k: Koordinat | null) => void;
   onOpenKatModal: () => void;
   onTambahBukti: () => void;
   onHapusBukti: (i: number) => void;
 }
 
 function Step1Form({
-  selectedKat, judul, deskripsi, lokasi, koordinat, buktiList, maxBukti,
-  onJudulChange, onDeskripsiChange, onLokasiChange, onKoordinatChange,
+  selectedKat, judul, deskripsi, lokasi, buktiList, maxBukti,
+  onJudulChange, onDeskripsiChange, onLokasiChange,
   onOpenKatModal, onTambahBukti, onHapusBukti,
 }: Step1Props) {
-  const [loadingLokasi, setLoadingLokasi] = useState(false);
   return (
     <View style={styles.stepWrap}>
       <Text style={styles.stepTitle}>Detail Laporan</Text>
@@ -231,53 +225,6 @@ function Step1Form({
         </View>
       </View>
 
-      {/* Tombol ambil lokasi GPS */}
-      <TouchableOpacity
-        style={styles.btnLokasi}
-        activeOpacity={0.8}
-        disabled={loadingLokasi}
-        onPress={async () => {
-          setLoadingLokasi(true);
-          try {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== "granted") {
-              Alert.alert("Izin Ditolak", "Aktifkan izin lokasi di pengaturan perangkat.");
-              return;
-            }
-            const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-            onKoordinatChange({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-          } catch {
-            Alert.alert("Gagal", "Tidak dapat mengambil lokasi. Coba lagi.");
-          } finally {
-            setLoadingLokasi(false);
-          }
-        }}
-      >
-        {loadingLokasi ? (
-          <ActivityIndicator size="small" color={COLORS.primary} />
-        ) : (
-          <Ionicons name="navigate-outline" size={16} color={COLORS.primary} />
-        )}
-        <Text style={styles.btnLokasiText}>
-          {koordinat ? "Perbarui Lokasi Saya" : "Gunakan Lokasi Saya"}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Koordinat info */}
-      {koordinat ? (
-        <View style={styles.koordinatBox}>
-          <Ionicons name="location" size={16} color={COLORS.success} />
-          <Text style={styles.koordinatText}>
-            📍 {koordinat.latitude.toFixed(6)}, {koordinat.longitude.toFixed(6)}
-          </Text>
-          <TouchableOpacity onPress={() => onKoordinatChange(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="close-circle" size={18} color={COLORS.danger} />
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <Text style={styles.koordinatHint}>Tekan "Gunakan Lokasi Saya" untuk mengisi koordinat otomatis.</Text>
-      )}
-
       {/* Info */}
       <View style={styles.infoBox}>
         <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
@@ -297,11 +244,10 @@ interface Step2Props {
   judul: string;
   deskripsi: string;
   lokasi: string;
-  koordinat: Koordinat | null;
   buktiList: BuktiItem[];
 }
 
-function Step2Konfirmasi({ selectedKat, judul, deskripsi, lokasi, koordinat, buktiList }: Step2Props) {
+function Step2Konfirmasi({ selectedKat, judul, deskripsi, lokasi, buktiList }: Step2Props) {
   return (
     <View style={styles.stepWrap}>
       <Text style={styles.stepTitle}>Konfirmasi Laporan</Text>
@@ -367,7 +313,7 @@ function Step2Konfirmasi({ selectedKat, judul, deskripsi, lokasi, koordinat, buk
         )}
 
         {/* Lokasi */}
-        {(lokasi.trim() !== "" || koordinat) && (
+        {lokasi.trim() !== "" && (
           <>
             <View style={styles.summaryDivider} />
             <View style={styles.summaryRow}>
@@ -376,12 +322,7 @@ function Step2Konfirmasi({ selectedKat, judul, deskripsi, lokasi, koordinat, buk
               </View>
               <View style={styles.summaryBody}>
                 <Text style={styles.summaryKey}>Lokasi Kejadian</Text>
-                {lokasi.trim() !== "" && <Text style={styles.summaryVal}>{lokasi}</Text>}
-                {koordinat && (
-                  <Text style={[styles.summaryVal, { fontSize: FONT.xs, color: COLORS.textMuted }]}>
-                    📍 {koordinat.latitude.toFixed(6)}, {koordinat.longitude.toFixed(6)}
-                  </Text>
-                )}
+                <Text style={styles.summaryVal}>{lokasi}</Text>
               </View>
             </View>
           </>
@@ -424,7 +365,6 @@ export default function BuatPengaduanScreen() {
   const [deskripsi, setDeskripsi]     = useState("");
   const [buktiList, setBuktiList]     = useState<BuktiItem[]>([]);
   const [lokasi, setLokasi]           = useState("");
-  const [koordinat, setKoordinat]     = useState<Koordinat | null>(null);
 
   // Modal
   const [katModal, setKatModal] = useState(false);
@@ -437,12 +377,11 @@ export default function BuatPengaduanScreen() {
   }, []);
 
   // ── Callbacks — stable references ─────────────────────────────────────────
-  const handleJudulChange      = useCallback((v: string) => setJudul(v), []);
-  const handleDeskripsiChange  = useCallback((v: string) => setDeskripsi(v), []);
-  const handleLokasiChange     = useCallback((v: string) => setLokasi(v), []);
-  const handleKoordinatChange  = useCallback((k: Koordinat | null) => setKoordinat(k), []);
-  const handleOpenKatModal     = useCallback(() => setKatModal(true), []);
-  const handleHapusBukti      = useCallback((i: number) => setBuktiList((prev) => prev.filter((_, idx) => idx !== i)), []);
+  const handleJudulChange     = useCallback((v: string) => setJudul(v), []);
+  const handleDeskripsiChange = useCallback((v: string) => setDeskripsi(v), []);
+  const handleLokasiChange    = useCallback((v: string) => setLokasi(v), []);
+  const handleOpenKatModal    = useCallback(() => setKatModal(true), []);
+  const handleHapusBukti     = useCallback((i: number) => setBuktiList((prev) => prev.filter((_, idx) => idx !== i)), []);
 
   // ── Upload bukti ──────────────────────────────────────────────────────────
   const addBukti = useCallback((asset: ImagePicker.ImagePickerAsset) => {
@@ -504,11 +443,7 @@ export default function BuatPengaduanScreen() {
     fd.append("kategori_aduan_id", String(selectedKat!.id));
     fd.append("judul",     judul.trim());
     fd.append("deskripsi", deskripsi.trim());
-    if (lokasi.trim())    fd.append("lokasi",    lokasi.trim());
-    if (koordinat) {
-      fd.append("latitude",  String(koordinat.latitude));
-      fd.append("longitude", String(koordinat.longitude));
-    }
+    if (lokasi.trim()) fd.append("lokasi", lokasi.trim());
     buktiList.forEach((b) =>
       fd.append("bukti[]", { uri: b.uri, name: b.name, type: b.type } as any),
     );
@@ -568,13 +503,11 @@ export default function BuatPengaduanScreen() {
             judul={judul}
             deskripsi={deskripsi}
             lokasi={lokasi}
-            koordinat={koordinat}
             buktiList={buktiList}
             maxBukti={MAX_BUKTI}
             onJudulChange={handleJudulChange}
             onDeskripsiChange={handleDeskripsiChange}
             onLokasiChange={handleLokasiChange}
-            onKoordinatChange={handleKoordinatChange}
             onOpenKatModal={handleOpenKatModal}
             onTambahBukti={handleTambahBukti}
             onHapusBukti={handleHapusBukti}
@@ -585,7 +518,6 @@ export default function BuatPengaduanScreen() {
             judul={judul}
             deskripsi={deskripsi}
             lokasi={lokasi}
-            koordinat={koordinat}
             buktiList={buktiList}
           />
         )}
@@ -666,19 +598,15 @@ const styles = StyleSheet.create({
   root:   { flex: 1, backgroundColor: COLORS.background },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  // Indicator
   indicatorWrap: { backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.divider },
 
-  // Scroll
   scroll:        { flex: 1 },
   scrollContent: { paddingBottom: SPACING.lg },
 
-  // Steps common
   stepWrap: { padding: SPACING.lg },
   stepTitle:{ fontSize: FONT.xxl, fontWeight: "800", color: COLORS.text, marginBottom: SPACING.xs },
   stepSub:  { fontSize: FONT.md, color: COLORS.textSecondary, lineHeight: 20, marginBottom: SPACING.xl },
 
-  // Labels
   fieldLabel: {
     fontSize: FONT.sm, fontWeight: "700", color: COLORS.textSecondary,
     letterSpacing: 0.5, marginBottom: SPACING.sm,
@@ -687,7 +615,6 @@ const styles = StyleSheet.create({
   req:      { color: COLORS.danger },
   optional: { fontWeight: "400", color: COLORS.textMuted, textTransform: "none" },
 
-  // Dropdown
   dropdownBtn: {
     flexDirection: "row", alignItems: "center", gap: SPACING.sm,
     backgroundColor: COLORS.white, borderRadius: RADIUS.lg,
@@ -699,7 +626,6 @@ const styles = StyleSheet.create({
   dropdownText:        { flex: 1, fontSize: FONT.md, fontWeight: "600", color: COLORS.text },
   dropdownPlaceholder: { color: COLORS.textPlaceholder, fontWeight: "400" },
 
-  // Input
   inputWrap: {
     backgroundColor: COLORS.white, borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.lg, paddingTop: SPACING.xs, paddingBottom: 2,
@@ -710,7 +636,6 @@ const styles = StyleSheet.create({
   inputRow:  { flexDirection: "row", alignItems: "center" },
   charCount: { textAlign: "right", fontSize: FONT.xs, color: COLORS.textMuted, paddingBottom: SPACING.xs },
 
-  // Bukti grid
   buktiGrid: {
     flexDirection: "row", flexWrap: "wrap",
     gap: SPACING.sm, marginBottom: SPACING.sm,
@@ -727,7 +652,6 @@ const styles = StyleSheet.create({
     justifyContent: "center", alignItems: "center", zIndex: 10,
   },
 
-  // Upload dashed box
   uploadBox: {
     borderWidth: 2, borderColor: COLORS.primary, borderStyle: "dashed",
     borderRadius: RADIUS.lg, padding: SPACING.xl,
@@ -743,27 +667,6 @@ const styles = StyleSheet.create({
   uploadTitle: { fontSize: FONT.xl, fontWeight: "700", color: COLORS.primary },
   uploadSub:   { fontSize: FONT.sm, color: COLORS.textMuted },
 
-  // Location button
-  btnLokasi: {
-    flexDirection: "row", alignItems: "center", gap: SPACING.sm,
-    borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm + 2,
-    marginTop: SPACING.sm, alignSelf: "flex-start",
-    backgroundColor: COLORS.primaryLight,
-  },
-  btnLokasiText: { fontSize: FONT.sm, fontWeight: "700", color: COLORS.primary },
-
-  koordinatBox: {
-    flexDirection: "row", alignItems: "center", gap: SPACING.sm,
-    backgroundColor: COLORS.successLight, borderRadius: RADIUS.lg,
-    padding: SPACING.md, marginTop: SPACING.sm,
-  },
-  koordinatText: { flex: 1, fontSize: FONT.sm, color: COLORS.success, fontWeight: "600" },
-  koordinatHint: {
-    fontSize: FONT.xs, color: COLORS.textMuted, marginTop: 4, fontStyle: "italic",
-  },
-
-  // Info box
   infoBox: {
     flexDirection: "row", gap: SPACING.sm, alignItems: "flex-start",
     backgroundColor: COLORS.primaryLight, borderRadius: RADIUS.lg,
@@ -771,7 +674,6 @@ const styles = StyleSheet.create({
   },
   infoText: { flex: 1, fontSize: FONT.sm, color: COLORS.primary, lineHeight: 18 },
 
-  // Summary card
   summaryCard: {
     backgroundColor: COLORS.white, borderRadius: RADIUS.xl,
     padding: SPACING.lg, ...SHADOW.sm, marginBottom: SPACING.lg,
@@ -788,11 +690,9 @@ const styles = StyleSheet.create({
   summaryVal:     { fontSize: FONT.md, color: COLORS.text, lineHeight: 20 },
   summaryDivider: { height: 1, backgroundColor: COLORS.divider, marginLeft: 36 + SPACING.md },
 
-  // Bukti preview in konfirmasi
   buktiPreviewRow:  { flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm, marginTop: SPACING.xs },
   buktiPreviewThumb:{ width: 60, height: 60, borderRadius: RADIUS.sm, backgroundColor: COLORS.border },
 
-  // Warning box
   warningBox: {
     flexDirection: "row", gap: SPACING.sm, alignItems: "flex-start",
     backgroundColor: "#FFFBEB", borderRadius: RADIUS.lg,
@@ -806,7 +706,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
   },
 
-  // Footer
   footer: {
     flexDirection: "row", alignItems: "center", gap: SPACING.md,
     backgroundColor: COLORS.white,
@@ -828,7 +727,6 @@ const styles = StyleSheet.create({
   submitBtnColor:{ backgroundColor: "#E07B39" },
   btnDisabled:   { backgroundColor: COLORS.border, elevation: 0, shadowOpacity: 0 },
 
-  // Modal (kategori picker)
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: COLORS.overlay,
